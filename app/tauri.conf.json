@@ -3,17 +3,50 @@
   "productName": "Leitor JW",
   "version": "0.1.0",
   "identifier": "io.github.leitorjw",
-  "build": { "frontendDist": "../ui" },
+  "build": {
+    "frontendDist": "../ui"
+  },
   "app": {
     "withGlobalTauri": true,
     "windows": [
-      { "label": "main", "title": "Leitor JW", "width": 1456, "height": 860, "minWidth": 720, "minHeight": 500, "dragDropEnabled": true }
+      {
+        "label": "main",
+        "title": "Leitor JW",
+        "width": 1456,
+        "height": 860,
+        "minWidth": 720,
+        "minHeight": 500,
+        "dragDropEnabled": true
+      }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "appimage"],
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"]
-  }
+    "targets": [
+      "deb",
+      "appimage"
+    ],
+    "category": "Education",
+    "shortDescription": "Leitor de publicações .jwpub para Linux",
+    "longDescription": "Leitor de publicações .jwpub no estilo do JW Library: Biblioteca, Bíblia com notas de estudo, Reuniões, grifos, notas, etiquetas, marcadores e backup .jwlibrary. Funciona sem internet com os arquivos que você importar. Projeto da comunidade, não oficial.",
+    "copyright": "Projeto da comunidade",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png"
+    ],
+    "linux": {
+      "deb": {
+        "section": "text"
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  },
+  "mainBinaryName": "leitor-jw"
 }
