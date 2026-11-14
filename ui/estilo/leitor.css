@@ -1,0 +1,80 @@
+/* O texto das publicações dentro do leitor. CSS próprio do Leitor JW:
+   dá aparência às classes do HTML do .jwpub (as utilitárias ficam em utilidades.css). */
+
+.documento {
+  --tam: 18px;
+  font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+  font-size: var(--tam);
+  line-height: 1.6;
+  color: var(--texto);
+  max-width: 590px;
+  padding: 0 0 120px;
+  overflow-wrap: break-word;
+}
+.documento.serifa { font-family: "Noto Serif", "DejaVu Serif", serif; }
+.documento img { max-width: 100%; height: auto; display: block; }
+.documento figure { margin: 16px 0; }
+.documento .figcaption, .documento figcaption { font-size: .85em; color: var(--texto-suave); margin-top: 6px; }
+.documento .imgCredit { font-size: .75em; color: var(--texto-suave); }
+
+/* Blocos que vão até a borda do artigo (faixa colorida do topo, imagem de abertura). */
+.documento .dc-bleedToArticleEdge { margin-inline: -32px; }
+.documento .dc-paddingToContentEdge { padding-inline: 32px; }
+.documento .dc-screenReaderText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.documento .pageNum { display: none; }
+
+.documento h1 { font-size: 1.75em; line-height: 1.25; margin: 12px 0 16px; font-weight: 700; }
+.documento h2 { font-size: 1.25em; line-height: 1.3; margin: 28px 0 10px; }
+.documento h3 { font-size: 1.1em; margin: 22px 0 8px; }
+.documento p { margin: 0 0 14px; }
+.documento .contextTtl { margin: 0; padding: 6px 0; font-size: .9em; letter-spacing: .03em; }
+.documento .themeScrp { font-size: 1.02em; }
+.documento .pubRefs { margin-bottom: 4px; }
+
+/* Parágrafos numerados e perguntas de estudo. */
+.documento .parNum { font-weight: 700; color: var(--texto-suave); margin-inline-end: 4px; font-size: .85em; }
+.documento .qu { color: var(--azul-texto); font-size: .95em; margin-top: 22px; }
+.documento .qu .parNum { color: inherit; }
+
+/* Campo de resposta que já vem na publicação (como no JW Library). */
+.documento .gen-field textarea {
+  display: block; width: 100%; min-height: 3.2em; box-sizing: border-box; resize: vertical;
+  font: inherit; font-size: .9em; color: var(--texto); background: var(--fundo);
+  border: 1px solid var(--borda); border-radius: 4px; padding: 8px 10px; margin: 6px 0 18px;
+}
+.documento .gen-field textarea:focus { outline: 2px solid var(--roxo-claro); border-color: transparent; }
+
+/* Links: textos bíblicos e outras publicações em azul, sem sublinhado. */
+.documento a { color: var(--azul-texto); text-decoration: none; }
+.documento a:hover { text-decoration: underline; }
+.documento a.fn, .documento .fn { font-size: .7em; vertical-align: super; line-height: 0; color: var(--azul-texto); }
+
+/* Quadros. */
+.documento .boxSupplement { padding: 18px 20px 6px; margin: 28px 0; border-radius: 2px; }
+.documento .boxTtl h2 { margin-top: 4px; }
+.documento .blockTeach { margin: 32px 0; }
+.documento .boxContent ul, .documento ul { padding-inline-start: 1.2em; }
+.documento li { margin-bottom: 6px; }
+.documento .stdPullQuote { font-size: 1.2em; font-weight: 600; padding: 12px 0; border-block: 2px solid var(--borda); }
+.documento hr { border: 0; border-top: 1px solid var(--borda); margin: 20px 0; }
+
+/* Tabelas e colunas. */
+.documento table { border-collapse: collapse; width: 100%; font-size: .9em; }
+.documento td, .documento th { padding: 6px 8px; vertical-align: top; }
+.documento .dc-table-border--rows tr + tr td { border-top: 1px solid var(--borda); }
+.documento .dc-table-border--columns td + td { border-inline-start: 1px solid var(--borda); }
+.documento .dc-columns, .documento .dc-columns-desktopOnly { display: flex; gap: 16px; }
+.documento .dc-columns-verticalAlign--center { align-items: center; }
+
+/* Bíblia (melhorado na Etapa 3). */
+.documento .chapterNo { float: left; font-size: 3em; line-height: 1; font-weight: 700; margin: 4px 10px 0 0; color: var(--roxo); }
+.documento .v .vl, .documento sup { font-size: .7em; color: var(--azul-texto); }
+
+/* Texto do original que não usamos neste leitor. */
+.documento .gen-flipbook, .documento .pm-flipbook-gallery { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  /* Cores claras das publicações ficam escuras no tema escuro. */
+  .documento [class*="du-bgColor--"][class*="-50"],
+  .documento [class*="du-bgColor--"][class*="-100"] { background-color: var(--fundo-bloco) !important; }
+}

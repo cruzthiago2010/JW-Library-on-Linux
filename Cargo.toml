@@ -1,0 +1,9 @@
+# Leitor no estilo JW Library para Linux: o núcleo (sem Tauri, testável) e a casca Tauri.
+[workspace]
+members = ["nucleo", "app"]
+resolver = "2"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

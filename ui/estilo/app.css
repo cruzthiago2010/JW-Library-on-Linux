@@ -1,0 +1,175 @@
+/* A moldura do app, no desenho do JW Library do Windows: barra de título roxa,
+   barra de comandos, trilho lateral de 5 seções e a área de conteúdo. */
+:root {
+  --roxo: #4a3b78;
+  --roxo-escuro: #352a5c;
+  --roxo-claro: #7b68b5;
+  --azul-texto: #2763b8;
+  --fundo: #ffffff;
+  --fundo-bloco: #f3f2f6;
+  --fundo-comandos: #ecebef;
+  --texto: #1f1d24;
+  --texto-suave: #5f5b68;
+  --borda: #d6d3dd;
+  --sombra: 0 4px 18px rgba(0, 0, 0, .18);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --roxo: #9d8bdc;
+    --roxo-escuro: #2a2340;
+    --roxo-claro: #b6a7ec;
+    --azul-texto: #7fb0f5;
+    --fundo: #1c1b20;
+    --fundo-bloco: #26252b;
+    --fundo-comandos: #232228;
+    --texto: #e8e6ee;
+    --texto-suave: #a8a4b3;
+    --borda: #3a3842;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+  font-size: 14px;
+  color: var(--texto);
+  background: var(--fundo);
+  display: grid;
+  grid-template-rows: 32px 48px 1fr;
+  grid-template-columns: 48px 1fr;
+  grid-template-areas: "titulo titulo" "trilho comandos" "trilho conteudo";
+  overflow: hidden;
+  user-select: none;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+svg.ic { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Barra de título. */
+#titulo {
+  grid-area: titulo; background: var(--roxo-escuro); color: #fff;
+  display: flex; align-items: center; gap: 6px; padding: 0 8px; font-size: 13px;
+}
+#voltar { width: 32px; height: 28px; display: grid; place-items: center; border-radius: 4px; visibility: hidden; }
+#voltar.ativo { visibility: visible; }
+#voltar:hover { background: rgba(255, 255, 255, .14); }
+
+/* Barra de comandos. */
+#comandos {
+  grid-area: comandos; background: var(--fundo-comandos); display: flex; align-items: center;
+  padding: 0 8px 0 14px; gap: 6px; border-bottom: 1px solid var(--borda);
+}
+#cabecalho { flex: 1; min-width: 0; line-height: 1.2; }
+#cabecalho .nome { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#cabecalho .sub { font-size: 12px; color: var(--texto-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#acoes { display: flex; gap: 2px; }
+#acoes button { width: 38px; height: 38px; border-radius: 4px; display: grid; place-items: center; color: var(--roxo); }
+#acoes button:hover, #trilho button:hover { background: rgba(120, 100, 180, .14); }
+
+/* Trilho lateral. */
+#trilho {
+  grid-area: trilho; background: var(--fundo-comandos); border-right: 1px solid var(--borda);
+  display: flex; flex-direction: column; padding-top: 4px; z-index: 20; width: 48px; transition: width .15s;
+  overflow: hidden;
+}
+#trilho.aberto { width: 210px; box-shadow: var(--sombra); }
+#trilho button {
+  height: 44px; display: flex; align-items: center; gap: 14px; padding-left: 14px;
+  color: var(--texto-suave); position: relative; white-space: nowrap; border-radius: 0;
+}
+#trilho button.ativo { color: var(--roxo); }
+#trilho button.ativo::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; background: var(--roxo); border-radius: 2px; }
+#trilho .rotulo { font-size: 14px; }
+#trilho .sep { flex: 1; }
+
+/* Conteúdo. */
+#conteudo { grid-area: conteudo; overflow: auto; position: relative; user-select: text; }
+.tela { padding: 20px 28px 60px; }
+.vazio { color: var(--texto-suave); text-align: center; padding: 60px 20px; }
+.vazio h2 { color: var(--roxo); font-weight: 600; }
+.botao {
+  background: var(--roxo); color: #fff; padding: 8px 18px; border-radius: 4px; font-weight: 600;
+}
+.botao:hover { filter: brightness(1.1); }
+.botao.leve { background: transparent; color: var(--roxo); border: 1px solid var(--roxo); }
+
+/* Abas (Biblioteca). */
+.abas { display: flex; gap: 22px; border-bottom: 1px solid var(--borda); margin: -4px 0 18px; }
+.abas button { padding: 10px 0; font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--texto-suave); border-bottom: 3px solid transparent; }
+.abas button.ativa { color: var(--roxo); border-color: var(--roxo); }
+
+/* Grade de categorias e de publicações. */
+.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.categoria {
+  display: flex; align-items: center; gap: 12px; padding: 16px; text-align: left; background: var(--fundo);
+  border: 1px solid var(--borda); border-radius: 4px; min-height: 64px;
+}
+.categoria:hover, .cartao:hover, .item:hover { background: var(--fundo-bloco); }
+.categoria svg.ic { color: var(--roxo); width: 26px; height: 26px; }
+.categoria .quantas { margin-left: auto; color: var(--texto-suave); font-size: 12px; }
+.grupo { margin: 22px 0 10px; font-size: 13px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .05em; }
+.cartao {
+  display: flex; gap: 12px; padding: 10px; text-align: left; border: 1px solid var(--borda);
+  border-radius: 4px; background: var(--fundo); align-items: flex-start;
+}
+.cartao img, .cartao .semcapa { width: 64px; height: 64px; object-fit: cover; border-radius: 2px; flex: none; background: var(--fundo-bloco); }
+.cartao .t { font-weight: 600; line-height: 1.3; }
+.cartao .m { color: var(--texto-suave); font-size: 12px; margin-top: 4px; }
+
+/* Sumário. */
+.capa-grande { display: flex; gap: 24px; align-items: flex-end; margin-bottom: 24px; }
+.capa-grande img { width: 180px; border-radius: 3px; box-shadow: var(--sombra); }
+.capa-grande h1 { font-size: 24px; margin: 0; color: var(--texto); }
+.lista { display: flex; flex-direction: column; }
+.item { display: flex; gap: 14px; align-items: center; padding: 10px 6px; text-align: left; border-bottom: 1px solid var(--borda); }
+.item img { width: 56px; height: 56px; object-fit: cover; border-radius: 2px; flex: none; }
+.item .t { color: var(--azul-texto); font-weight: 500; }
+.item.secao { color: var(--texto-suave); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; border: 0; padding-top: 20px; cursor: default; }
+.item.secao:hover { background: none; }
+.filhos { padding-left: 18px; }
+
+/* Leitor: coluna fixa à esquerda e o painel de estudo à direita. */
+.leitor { display: grid; grid-template-columns: minmax(0, 1fr) 0; min-height: 100%; }
+.leitor.com-painel { grid-template-columns: minmax(0, 1fr) minmax(300px, 40%); }
+.leitor .coluna { padding: 24px 64px 0 72px; position: relative; }
+.leitor .painel { border-left: 1px solid var(--borda); background: var(--fundo-bloco); overflow: auto; display: none; padding: 18px; }
+.leitor.com-painel .painel { display: block; }
+.painel h3 { margin: 0 0 12px; font-size: 14px; color: var(--roxo); }
+.seta {
+  position: fixed; top: 50%; width: 32px; height: 64px; display: grid; place-items: center;
+  color: var(--texto-suave); border-radius: 4px; z-index: 5;
+}
+.seta:hover { background: var(--fundo-bloco); color: var(--roxo); }
+.seta.esq { left: 54px; }
+.seta.dir { right: 8px; }
+.leitor.com-painel ~ .seta.dir { right: calc((100vw - 48px) * .4 + 8px); }
+#flutuante {
+  position: fixed; right: 22px; bottom: 22px; width: 48px; height: 48px; border-radius: 50%;
+  background: var(--roxo); color: #fff; display: grid; place-items: center; box-shadow: var(--sombra); z-index: 10;
+}
+
+/* Menus e diálogos. */
+.menu {
+  position: fixed; background: var(--fundo); border: 1px solid var(--borda); box-shadow: var(--sombra);
+  border-radius: 6px; padding: 6px 0; min-width: 220px; z-index: 50;
+}
+.menu button { display: block; width: 100%; text-align: left; padding: 9px 16px; }
+.menu button:hover { background: var(--fundo-bloco); }
+.menu .deslizante { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+.menu input[type=range] { flex: 1; accent-color: var(--roxo); }
+#aviso {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--roxo-escuro);
+  color: #fff; padding: 10px 18px; border-radius: 6px; box-shadow: var(--sombra); z-index: 60; display: none; max-width: 70%;
+}
+#soltar {
+  position: fixed; inset: 0; background: rgba(74, 59, 120, .85); color: #fff; display: none;
+  place-items: center; font-size: 22px; z-index: 70; border: 4px dashed #fff;
+}
+body.soltando #soltar { display: grid; }
+
+/* Início. */
+.boas-vindas { background: var(--fundo-bloco); padding: 28px; text-align: center; border-radius: 4px; margin-bottom: 24px; }
+.boas-vindas h1 { color: var(--roxo); font-weight: 600; font-size: 22px; margin: 0 0 8px; }
+.boas-vindas p { color: var(--texto-suave); margin: 0 0 16px; }
+.secao-titulo { font-size: 17px; font-weight: 600; color: var(--roxo); margin: 26px 0 12px; }

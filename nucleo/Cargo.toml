@@ -1,0 +1,16 @@
+[package]
+name = "leitor-nucleo"
+version = "0.1.0"
+description = "Leitor do .jwpub (sem Tauri)"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }
+aes = "0.8"
+cbc = "0.1"
+sha2 = "0.10"
+flate2 = "1"
+regex = "1"
