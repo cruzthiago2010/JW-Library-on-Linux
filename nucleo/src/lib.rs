@@ -6,4 +6,6 @@ pub mod busca;
 pub mod estudo;
 pub mod jwpub;
 pub mod leitor;
+pub mod pessoal;
 pub mod reunioes;
+pub mod tokens;

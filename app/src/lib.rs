@@ -4,6 +4,9 @@ use std::borrow::Cow;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use std::sync::Mutex;
+
+use leitor_nucleo::pessoal::{self, Alvo, Faixa, Identidade, Pessoal};
 use leitor_nucleo::{biblia, biblioteca, busca, estudo, jwpub, leitor, reunioes};
 use tauri::http::{header, Request, Response, StatusCode};
 use tauri::{Manager, UriSchemeContext};
@@ -11,6 +14,7 @@ use tauri::{Manager, UriSchemeContext};
 struct Estado {
     raiz: PathBuf,
     dados: PathBuf,
+    pessoal: Mutex<Pessoal>,
 }
 
 /// O começo do endereço do protocolo `conteudo` na plataforma.
@@ -295,6 +299,88 @@ async fn buscar_biblia(app: tauri::AppHandle, termos: String, exata: bool) -> Re
     .map_err(|e| e.to_string())?
 }
 
+// ---------------------------------------------------------------- estudo pessoal
+
+fn identidade(raiz: &Path, alvo: &Alvo) -> Result<Identidade, String> {
+    match alvo {
+        Alvo::Doc { pasta, id } => Identidade::de_documento(&jwpub::Publicacao::abrir(raiz, pasta)?, *id),
+        Alvo::Biblia { livro, capitulo } => {
+            let b = achar_biblia(raiz)?;
+            let nome = biblia::NOMES.get(*livro as usize - 1).copied().unwrap_or("?");
+            Ok(Identidade::de_capitulo(&b.publicacao, *livro, *capitulo, format!("{nome} {capitulo}")))
+        }
+    }
+}
+
+/// Roda `f` com o banco do usuário e a identidade do lugar.
+fn com_pessoal<T>(app: &tauri::AppHandle, alvo: &Alvo, f: impl FnOnce(&Pessoal, &Identidade) -> Result<T, String>) -> Result<T, String> {
+    let estado = app.state::<Estado>();
+    let id = identidade(&estado.raiz, alvo)?;
+    let p = estado.pessoal.lock().map_err(|e| e.to_string())?;
+    f(&p, &id)
+}
+
+#[tauri::command]
+fn marcas_do_lugar(app: tauri::AppHandle, alvo: Alvo) -> Result<pessoal::DoLugar, String> {
+    com_pessoal(&app, &alvo, |p, id| p.do_lugar(id))
+}
+
+#[tauri::command]
+fn grifar(app: tauri::AppHandle, alvo: Alvo, faixas: Vec<Faixa>, cor: i64, guid: Option<String>) -> Result<String, String> {
+    com_pessoal(&app, &alvo, |p, id| p.grifar(id, &faixas, cor, guid))
+}
+
+#[tauri::command]
+fn remover_grifo(app: tauri::AppHandle, guid: String) -> Result<(), String> {
+    app.state::<Estado>().pessoal.lock().map_err(|e| e.to_string())?.remover_grifo(&guid)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[tauri::command]
+fn anotar(app: tauri::AppHandle, alvo: Alvo, guid: Option<String>, bloco: Option<i64>, grifo: Option<String>, titulo: String, texto: String, etiquetas: Vec<String>) -> Result<String, String> {
+    com_pessoal(&app, &alvo, |p, id| p.anotar(id, guid, bloco, grifo.as_deref(), &titulo, &texto, &etiquetas))
+}
+
+#[tauri::command]
+fn apagar_nota(app: tauri::AppHandle, guid: String) -> Result<(), String> {
+    app.state::<Estado>().pessoal.lock().map_err(|e| e.to_string())?.apagar_nota(&guid)
+}
+
+#[tauri::command]
+fn campo(app: tauri::AppHandle, alvo: Alvo, tag: String, valor: String) -> Result<(), String> {
+    com_pessoal(&app, &alvo, |p, id| p.campo(id, &tag, &valor))
+}
+
+#[tauri::command]
+fn notas(app: tauri::AppHandle, filtro: String, etiqueta: Option<String>) -> Result<Vec<pessoal::NotaComOrigem>, String> {
+    app.state::<Estado>().pessoal.lock().map_err(|e| e.to_string())?.todas_as_notas(&filtro, etiqueta.as_deref())
+}
+
+#[tauri::command]
+fn etiquetas(app: tauri::AppHandle) -> Result<Vec<(String, i64)>, String> {
+    app.state::<Estado>().pessoal.lock().map_err(|e| e.to_string())?.etiquetas()
+}
+
+#[tauri::command]
+fn apagar_etiqueta(app: tauri::AppHandle, nome: String) -> Result<(), String> {
+    app.state::<Estado>().pessoal.lock().map_err(|e| e.to_string())?.apagar_etiqueta(&nome)
+}
+
+#[tauri::command]
+fn marcadores(app: tauri::AppHandle, alvo: Alvo) -> Result<Vec<pessoal::Marcador>, String> {
+    com_pessoal(&app, &alvo, |p, id| p.marcadores(id))
+}
+
+#[tauri::command]
+fn marcar(app: tauri::AppHandle, alvo: Alvo, slot: i64, bloco: Option<i64>, trecho: String) -> Result<(), String> {
+    com_pessoal(&app, &alvo, |p, id| p.marcar(id, slot, bloco, &trecho))
+}
+
+#[tauri::command]
+fn desmarcar(app: tauri::AppHandle, alvo: Alvo, slot: i64) -> Result<(), String> {
+    com_pessoal(&app, &alvo, |p, id| p.desmarcar(id, slot))
+}
+
 fn tipo(nome: &str) -> &'static str {
     match nome.rsplit('.').next().map(|e| e.to_ascii_lowercase()).as_deref() {
         Some("jpg" | "jpeg") => "image/jpeg",
@@ -337,11 +423,14 @@ pub fn run() {
             let dados = app.path().app_data_dir()?;
             let raiz = dados.join("biblioteca");
             fs::create_dir_all(&raiz)?;
-            app.manage(Estado { raiz, dados });
+            let pessoal = Pessoal::abrir(&dados.join("userData.db")).map_err(|e| e.to_string())?;
+            app.manage(Estado { raiz, dados, pessoal: Mutex::new(pessoal) });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
-            livros, capitulo, referencias, texto_biblico, buscar_biblia
+            livros, capitulo, referencias, texto_biblico, buscar_biblia,
+            marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
+            marcadores, marcar, desmarcar
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

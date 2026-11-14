@@ -177,6 +177,8 @@ pub struct Publicacao {
     /// ("Bible", "Book"…): a categoria na Biblioteca do Arquivo.
     pub categoria: String,
     pub tipo: String,
+    /// `MepsLanguageIndex` (português = 5): o `MepsLanguage` das marcas do usuário.
+    pub lingua: i64,
 }
 
 #[derive(serde::Serialize, Clone)]
@@ -234,7 +236,7 @@ impl Publicacao {
                 Ok((texto(l.get(0)?), texto(l.get(1)?)))
             })
             .unwrap_or_default();
-        Ok(Self { pasta, dir, chave, vetor, titulo, curto, simbolo, sigla, ano, edicao, categoria, tipo })
+        Ok(Self { pasta, dir, chave, vetor, titulo, curto, simbolo, sigla, ano, edicao, categoria, tipo, lingua })
     }
 
     fn conectar(dir: &Path) -> Resultado<Connection> {

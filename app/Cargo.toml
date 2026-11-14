@@ -6,7 +6,8 @@ edition = "2021"
 
 [lib]
 name = "leitor_jw_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# Só "rlib" no PC (o disco é pequeno); para Android: ["staticlib", "cdylib", "rlib"].
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

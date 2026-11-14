@@ -314,6 +314,7 @@ function menuDoVersiculo(c, e, d, verso, ancora) {
   const limpar = () => { c.querySelector('.documento')?.classList.remove('esmaecido'); partes.forEach((x) => x.classList.remove('escolhido')); };
   const m = menu(ancora, `<div class="barra-verso">
     <button data-o="notas" title="Notas de estudo">${icone('painel')}<span>Estudo</span></button>
+    <button data-o="nota" title="Adicionar uma nota">${icone('nota')}<span>Nota</span></button>
     <button data-o="copiar" title="Copiar">${icone('copiar')}<span>Copiar</span></button>
     </div>`);
   m.classList.add('menu-verso');
@@ -324,7 +325,9 @@ function menuDoVersiculo(c, e, d, verso, ancora) {
   setTimeout(() => document.addEventListener('click', fora, true), 0);
   m.onclick = async (ev) => {
     const o = ev.target.closest('[data-o]')?.dataset.o;
-    if (o === 'copiar') {
+    if (o === 'nota') {
+      await Marcas.novaNota(verso, null);
+    } else if (o === 'copiar') {
       const texto = `${d.titulo}:${verso} ${textoDoVerso(c, e, verso)}`;
       try { await navigator.clipboard.writeText(texto); aviso('Versículo copiado.'); } catch (_) { aviso('Não deu para copiar.'); }
     } else if (o === 'notas') {
@@ -355,6 +358,8 @@ function guardarHistorico(item) {
   guardar('historico', h.slice(0, 30));
 }
 const abrirDoHistorico = (x) => abrir(x.tela === 'capitulo' ? { tela: 'capitulo', livro: x.livro, capitulo: x.capitulo } : { tela: 'documento', pasta: x.pasta, id: x.id });
+
+function backup() { aviso('Backup e restauração chegam na Etapa 5.'); }
 
 // ---------- Telas ----------
 const TELAS = {
@@ -423,6 +428,7 @@ const TELAS = {
     const comPainel = ler('painel', false);
     barra(d.titulo, d.publicacao, [
       ['buscar', 'Buscar na Bíblia', () => abrir({ tela: 'busca' })],
+      ['marcador', 'Marcadores', () => Marcas.marcadores()],
       ['historico', 'Histórico', historico],
       ['mais', 'Mais opções', (ev, b) => menuDoLeitor(b)],
     ]);
@@ -476,6 +482,7 @@ const TELAS = {
     });
     if (e.verso) setTimeout(() => irAoVerso(c, e, e.verso, true), 50);
     guardarHistorico({ tela: 'capitulo', livro: e.livro, capitulo: e.capitulo, titulo: d.titulo, publicacao: d.publicacao });
+    await Marcas.montar(c, { tipo: 'biblia', livro: e.livro, capitulo: e.capitulo });
   },
 
   busca(c, e) {
@@ -575,7 +582,7 @@ const TELAS = {
     const d = await chamar('documento', { pasta: e.pasta, id: e.id });
     const tam = ler('tamanho', 18);
     const comPainel = ler('painel', false);
-    barra(d.titulo, d.publicacao, [['historico', 'Histórico', historico], ['mais', 'Mais opções', (ev, b) => menuDoLeitor(b)]]);
+    barra(d.titulo, d.publicacao, [['marcador', 'Marcadores', () => Marcas.marcadores()], ['historico', 'Histórico', historico], ['mais', 'Mais opções', (ev, b) => menuDoLeitor(b)]]);
     c.innerHTML = `<div class="leitor${comPainel ? ' com-painel' : ''}">
       <div class="coluna"><article class="documento" style="--tam:${tam}px">${d.html}</article></div>
       <aside class="painel"><h3>Painel de estudo</h3><div class="painel-topo"></div><div class="painel-corpo"><p class="vazio" style="padding:20px 0">Carregando…</p></div></aside>
@@ -595,6 +602,8 @@ const TELAS = {
       else await seguirLink(c, a, ev);
     });
     guardarHistorico({ tela: 'documento', pasta: e.pasta, id: e.id, titulo: d.titulo, publicacao: d.publicacao });
+    await Marcas.montar(c, { tipo: 'doc', pasta: e.pasta, id: e.id });
+    if (e.bloco != null) c.querySelector(`.documento [data-pid="${e.bloco}"]`)?.scrollIntoView({ block: 'center' });
   },
 
   async reunioes(c, e) {
@@ -625,9 +634,46 @@ const TELAS = {
     c.querySelectorAll('.item[data-pasta]').forEach((b) => (b.onclick = () => abrir({ tela: 'documento', pasta: b.dataset.pasta, id: +b.dataset.id })));
   },
 
-  estudo(c) {
-    barra('Estudo Pessoal', 'Português (Brasil)');
-    c.innerHTML = '<div class="vazio"><h2>Estudo Pessoal</h2><p>Grifos, notas, etiquetas e marcadores chegam na Etapa 4.</p></div>';
+  async estudo(c, e) {
+    barra('Notas e etiquetas', 'Estudo Pessoal', [
+      ['importar', 'Backup e restauração', () => backup()],
+      ['historico', 'Histórico', historico],
+    ]);
+    const [notas, etiquetas] = await Promise.all([chamar('notas', { filtro: e.filtro || '', etiqueta: e.etiqueta || null }), chamar('etiquetas')]);
+    const data = (t) => { try { return new Date(t).toLocaleDateString('pt-BR'); } catch (_) { return ''; } };
+    c.innerHTML = `<div class="tela">
+      <form class="campo-busca"><input type="search" placeholder="Buscar nas notas" value="${esc(e.filtro || '')}"></form>
+      <div class="etiquetas">${etiquetas.length ? etiquetas.map(([nome, n]) => `<span class="chip${e.etiqueta === nome ? ' ativa' : ''}" data-etiqueta="${esc(nome)}">${esc(nome)} <small>${n}</small><button data-tirar="${esc(nome)}" title="Apagar a etiqueta">×</button></span>`).join('') : '<span class="dica">Dica: escreva etiquetas nas notas (separadas por vírgula) para agrupar por assunto.</span>'}</div>
+      ${notas.length ? `<div class="mural">${notas.map((n, i) => `<button class="nota-mural cor-${n.cor || 0}" data-i="${i}">
+          <div class="quando">${data(n.alterada)}</div>
+          ${n.titulo ? `<div class="t">${esc(n.titulo)}</div>` : ''}
+          <div class="corpo">${esc(n.texto).replace(/\n/g, '<br>') || '<i>(sem texto)</i>'}</div>
+          ${n.etiquetas.length ? `<div class="mini-etiquetas">${n.etiquetas.map(esc).join(' · ')}</div>` : ''}
+          <div class="origem">${esc(n.origem || n.simbolo)}</div></button>`).join('')}</div>`
+        : `<div class="vazio"><h2>Nenhuma nota${e.filtro || e.etiqueta ? ' encontrada' : ' ainda'}</h2><p>Selecione um trecho no leitor e escolha "Adicionar uma nota", ou clique no número de um versículo.</p></div>`}
+    </div>`;
+    const form = c.querySelector('form');
+    form.onsubmit = (x) => { x.preventDefault(); e.filtro = form.querySelector('input').value; desenhar(); };
+    form.querySelector('input').addEventListener('search', () => { e.filtro = form.querySelector('input').value; desenhar(); });
+    c.querySelectorAll('[data-etiqueta]').forEach((x) => (x.onclick = (ev) => {
+      if (ev.target.dataset.tirar) return;
+      e.etiqueta = e.etiqueta === x.dataset.etiqueta ? null : x.dataset.etiqueta;
+      desenhar();
+    }));
+    c.querySelectorAll('[data-tirar]').forEach((x) => (x.onclick = () => {
+      dialogo('Apagar etiqueta', `<p>A etiqueta "${esc(x.dataset.tirar)}" sai de todas as notas. As notas continuam.</p>`, [['Cancelar', null], ['Apagar', async () => {
+        await chamar('apagar_etiqueta', { nome: x.dataset.tirar });
+        if (e.etiqueta === x.dataset.tirar) e.etiqueta = null;
+        desenhar();
+      }]]);
+    }));
+    c.querySelectorAll('.nota-mural').forEach((x) => (x.onclick = async () => {
+      const n = notas[+x.dataset.i];
+      if (n.livro) return abrir({ tela: 'capitulo', livro: n.livro, capitulo: n.capitulo, verso: n.bloco });
+      const achado = n.meps ? await chamar('achar_meps', { meps: n.meps }) : null;
+      if (achado) abrir({ tela: 'documento', pasta: achado[0], id: achado[1], bloco: n.bloco });
+      else aviso('A publicação desta nota não está na sua biblioteca.');
+    }));
   },
 };
 

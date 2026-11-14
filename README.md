@@ -20,7 +20,7 @@ JW Library: o visual das publicações vem de um CSS próprio (`ui/estilo/`).
 ## Compilar e abrir
 
 ```bash
-export CARGO_TARGET_DIR="$HOME/Documents/Aplicativo Thiago/nativo/target"   # no PC do Thiago: reaproveita a compilação
+export CARGO_TARGET_DIR="$HOME/Documents/Aplicativo Thiago/nativo/target" CARGO_INCREMENTAL=0   # no PC do Thiago: reaproveita a compilação e poupa disco
 cargo test -p leitor-nucleo
 cargo run -p leitor-jw
 ```

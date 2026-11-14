@@ -269,3 +269,58 @@ body.soltando #soltar { display: grid; }
 .contador { color: var(--texto-suave); font-size: 13px; margin-bottom: 8px; }
 .achado .m { color: var(--texto); font-size: 14px; margin-top: 4px; line-height: 1.5; }
 .achado .t { font-weight: 600; }
+
+/* Cores dos grifos em cartões e botões. */
+.cor-1 { --cor: #f5cf2e; } .cor-2 { --cor: #6cc456; } .cor-3 { --cor: #4f9cf0; }
+.cor-4 { --cor: #f07fb2; } .cor-5 { --cor: #f59a3c; } .cor-6 { --cor: #a27ee6; } .cor-0 { --cor: #b9b5c4; }
+.nota-marca { background: var(--cor) !important; }
+
+/* Barra que aparece ao selecionar texto. */
+.barra-grifo { position: fixed; z-index: 55; display: flex; align-items: center; gap: 6px; background: var(--fundo); border: 1px solid var(--borda); box-shadow: var(--sombra); border-radius: 22px; padding: 6px 10px; }
+.barra-grifo .cor { width: 26px; height: 26px; border-radius: 50%; background: var(--cor); border: 2px solid transparent; color: #222; font-weight: 700; font-size: 13px; }
+.barra-grifo .cor:hover { transform: scale(1.12); }
+.barra-grifo .cor.atual { border-color: var(--texto); }
+.barra-grifo .sep { width: 1px; height: 22px; background: var(--borda); margin: 0 4px; }
+.barra-grifo button:not(.cor) { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: var(--roxo); }
+.barra-grifo button:not(.cor):hover { background: var(--fundo-bloco); }
+
+/* Notas no painel. */
+.nota-cartao { background: var(--fundo); border-left: 5px solid var(--cor); border-radius: 4px; padding: 10px 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+.nota-cab { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .05em; }
+.nota-cab button { color: var(--texto-suave); width: 28px; height: 28px; display: grid; place-items: center; border-radius: 4px; }
+.nota-cab button:hover { color: #c0392b; background: var(--fundo-bloco); }
+.nota-cartao input, .nota-cartao textarea { font: inherit; color: var(--texto); background: transparent; border: 0; border-bottom: 1px solid var(--borda); padding: 4px 0; resize: vertical; }
+.nota-cartao .nota-titulo { font-weight: 700; font-size: 15px; }
+.nota-cartao .nota-etiquetas { font-size: 12px; color: var(--roxo); }
+.nota-cartao input:focus, .nota-cartao textarea:focus { outline: none; border-color: var(--roxo); }
+.minhas-notas:not(:empty) { margin-bottom: 14px; }
+
+/* Marcadores: 10 fitas coloridas. */
+.fitas { display: flex; flex-direction: column; gap: 6px; }
+.fita { display: flex; align-items: stretch; border-left: 8px solid var(--fita); background: var(--fundo-bloco); border-radius: 3px; }
+.fita-ir { flex: 1; text-align: left; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.fita-ir small { color: var(--texto-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
+.fita .nao-usado { color: var(--texto-suave); font-size: 13px; }
+.fita-x { width: 34px; font-size: 18px; color: var(--texto-suave); }
+.fita-0 { --fita: #e74c3c; } .fita-1 { --fita: #e67e22; } .fita-2 { --fita: #f1c40f; } .fita-3 { --fita: #2ecc71; } .fita-4 { --fita: #1abc9c; }
+.fita-5 { --fita: #3498db; } .fita-6 { --fita: #34495e; } .fita-7 { --fita: #9b59b6; } .fita-8 { --fita: #e84393; } .fita-9 { --fita: #95a5a6; }
+
+/* Estudo Pessoal: etiquetas e mural de notas em duas colunas. */
+.etiquetas { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--fundo-bloco); border: 1px solid var(--borda); border-radius: 16px; padding: 4px 6px 4px 12px; cursor: pointer; font-size: 13px; }
+.chip.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+.chip small { opacity: .7; }
+.chip button { width: 20px; height: 20px; border-radius: 50%; font-size: 14px; line-height: 1; color: inherit; opacity: .6; }
+.chip button:hover { opacity: 1; background: rgba(0, 0, 0, .1); }
+.dica { color: var(--texto-suave); font-size: 13px; }
+.mural { columns: 2 320px; column-gap: 14px; }
+.nota-mural { break-inside: avoid; display: block; width: 100%; text-align: left; margin: 0 0 14px; padding: 12px 14px; background: color-mix(in srgb, var(--cor) 22%, var(--fundo)); border: 1px solid color-mix(in srgb, var(--cor) 55%, var(--borda)); border-radius: 6px; }
+.nota-mural:hover { filter: brightness(.98); box-shadow: var(--sombra); }
+.nota-mural .quando { font-size: 11px; color: var(--texto-suave); margin-bottom: 4px; }
+.nota-mural .t { font-weight: 700; margin-bottom: 4px; }
+.nota-mural .corpo { font-size: 14px; line-height: 1.45; }
+.nota-mural .mini-etiquetas { font-size: 12px; color: var(--roxo); margin-top: 6px; }
+.nota-mural .origem { font-size: 12px; color: var(--azul-texto); margin-top: 8px; border-top: 1px solid color-mix(in srgb, var(--cor) 40%, var(--borda)); padding-top: 6px; }
+
+/* O painel de estudo rola sozinho e fica parado enquanto o texto rola. */
+.leitor .painel { position: sticky; top: 0; height: calc(100vh - 80px); align-self: start; overflow: auto; }

@@ -94,3 +94,16 @@
 .documento.esmaecido .v.escolhido { opacity: 1; background: rgba(123, 104, 181, .16); }
 .documento .realce-v { background: rgba(240, 200, 60, .35); transition: background .6s; }
 .documento .se { font-weight: 700; }
+
+/* Grifos (API de destaques do CSS: não mexe no HTML da publicação).
+   1 amarelo, 2 verde, 3 azul, 4 rosa, 5 laranja, 6 roxo — os números do JW Library. */
+::highlight(grifo1) { background-color: rgba(255, 223, 65, .55); }
+::highlight(grifo2) { background-color: rgba(127, 214, 106, .5); }
+::highlight(grifo3) { background-color: rgba(110, 182, 255, .5); }
+::highlight(grifo4) { background-color: rgba(255, 140, 190, .5); }
+::highlight(grifo5) { background-color: rgba(255, 168, 82, .55); }
+::highlight(grifo6) { background-color: rgba(180, 140, 240, .5); }
+::highlight(selecao-grifo) { background-color: rgba(74, 59, 120, .25); }
+.documento [data-pid], .documento .v { position: relative; }
+.nota-marca { position: absolute; left: -26px; top: .35em; width: 12px; height: 12px; border-radius: 2px; background: #9a96a6; cursor: pointer; }
+.documento .v .nota-marca { position: relative; display: inline-block; left: auto; top: auto; margin-right: 4px; vertical-align: middle; }

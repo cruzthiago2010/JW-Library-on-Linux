@@ -7,3 +7,10 @@ resolver = "2"
 strip = true
 lto = true
 codegen-units = 1
+
+# O disco do PC de desenvolvimento é pequeno: sem informação de depuração nos
+# nossos pacotes (as dependências continuam como estão, sem recompilar).
+[profile.dev.package.leitor-jw]
+debug = 0
+[profile.dev.package.leitor-nucleo]
+debug = 0

@@ -23,6 +23,9 @@ const ICONES = {
   buscar: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
   texto: '<path d="M4 19l5-14 5 14M6 14h6M15 19l3-8 3 8M16 17h4"/>',
   copiar: '<rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
+  nota: '<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M9 13h6M12 10v6"/>',
+  lixeira: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+  marcador: '<path d="M7 3h10v18l-5-4-5 4z"/>',
   config: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
 };
 function icone(nome, classe = 'ic') {
