@@ -117,6 +117,66 @@ function menu(botao, conteudo) {
   return m;
 }
 
+// ---------- Diálogos ----------
+function dialogo(titulo, corpo, botoes = [['Fechar', null]]) {
+  const f = document.createElement('div');
+  f.className = 'fundo-dialogo';
+  f.innerHTML = `<div class="dialogo" role="dialog"><h2>${esc(titulo)}</h2><div class="corpo">${corpo}</div><div class="rodape"></div></div>`;
+  const rodape = f.querySelector('.rodape');
+  for (const [nome, fn] of botoes) {
+    const b = document.createElement('button');
+    b.className = 'botao' + (fn ? ' leve' : '');
+    b.textContent = nome;
+    b.onclick = () => { if (fn) fn(); f.remove(); };
+    rodape.appendChild(b);
+  }
+  f.addEventListener('click', (e) => { if (e.target === f) f.remove(); });
+  document.body.appendChild(f);
+  return f;
+}
+function historico() {
+  const h = ler('historico', []);
+  const corpo = h.length
+    ? `<div class="lista">${h.map((x, i) => `<button class="item" data-h="${i}"><div><div class="t">${esc(x.titulo)}</div><div class="m">${esc(x.publicacao)}</div></div></button>`).join('')}</div>`
+    : '<p class="vazio">Nada lido ainda.</p>';
+  const f = dialogo('Histórico', corpo, [['Limpar', () => { guardar('historico', []); }], ['Fechar', null]]);
+  f.querySelectorAll('[data-h]').forEach((b) => (b.onclick = () => {
+    const x = h[+b.dataset.h];
+    f.remove();
+    abrir({ tela: 'documento', pasta: x.pasta, id: x.id });
+  }));
+}
+function aplicarTema() {
+  const t = ler('tema', 'sistema');
+  if (t === 'sistema') document.documentElement.removeAttribute('data-tema');
+  else document.documentElement.dataset.tema = t;
+}
+function configuracoes() {
+  const t = ler('tema', 'sistema');
+  const corpo = `<div class="grupo">Exibição</div>
+    <label class="opcao">Aparência <select id="tema">${[['sistema', 'Padrão do sistema'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(([k, n]) =>
+      `<option value="${k}"${k === t ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="opcao">Avisar sobre arquivos .jwpub novos em Downloads <input type="checkbox" id="avisar"${ler('avisar_downloads', true) ? ' checked' : ''}></label>
+    <div class="grupo">Sobre</div>
+    <p>Leitor JW 0.1 — leitor de publicações .jwpub para Linux, feito pela comunidade. Não é um aplicativo oficial.</p>`;
+  const f = dialogo('Configurações', corpo);
+  f.querySelector('#tema').onchange = (e) => { guardar('tema', e.target.value); aplicarTema(); };
+  f.querySelector('#avisar').onchange = (e) => { guardar('avisar_downloads', e.target.checked); desenhar(); };
+}
+
+// ---------- Arquivos novos em Downloads ----------
+async function faixaNovos(c) {
+  if (!ler('avisar_downloads', true)) return;
+  let novos = [];
+  try { novos = await chamar('novos_em_downloads'); } catch (_) { return; }
+  if (!novos.length) return;
+  const faixa = document.createElement('div');
+  faixa.className = 'faixa-novos';
+  faixa.innerHTML = `${icone('importar')}<span>${novos.length === 1 ? `Há um arquivo novo em Downloads: ${esc(novos[0].nome)}` : `Há ${novos.length} arquivos .jwpub novos em Downloads.`}</span><button class="botao">Importar</button>`;
+  faixa.querySelector('button').onclick = () => importar(novos.map((n) => n.caminho));
+  c.querySelector('.tela')?.prepend(faixa);
+}
+
 // ---------- Importar ----------
 async function importar(caminhos) {
   if (!caminhos || !caminhos.length) return;
@@ -163,6 +223,39 @@ function ligarCartoes(raiz) {
   raiz.querySelectorAll('.cartao[data-pasta]').forEach((b) => (b.onclick = () => abrir({ tela: 'sumario', pasta: b.dataset.pasta })));
 }
 
+// ---------- Painel de estudo ----------
+async function montarPainel(c, e) {
+  const corpo = c.querySelector('.painel-corpo');
+  let p;
+  try { p = await chamar('painel', { pasta: e.pasta, id: e.id }); } catch (erro) { corpo.innerHTML = `<p class="vazio">${esc(erro)}</p>`; return; }
+  const porParagrafo = new Map();
+  const juntar = (par, html) => { if (!porParagrafo.has(par)) porParagrafo.set(par, []); porParagrafo.get(par).push(html); };
+  for (const n of p.notas) juntar(n.paragrafo, `<div class="bloco" data-nota="${n.indice}"><div class="rotulo">Nota de rodapé ${n.indice}</div>${n.html}</div>`);
+  for (const t of p.trechos) juntar(t.paragrafo, `<div class="bloco"><div class="rotulo">${esc(t.origem)}</div>${t.html}</div>`);
+  if (!porParagrafo.size) { corpo.innerHTML = '<p class="vazio" style="padding:20px 0">Nenhum conteúdo de estudo.</p>'; return; }
+  corpo.innerHTML = [...porParagrafo.keys()].sort((a, b) => a - b).map((par) => {
+    const num = c.querySelector(`.documento [data-pid="${par}"] .parNum`)?.textContent?.replace(/\D/g, '');
+    return `<div class="paragrafo" data-par="${par}">${num ? `Parágrafo ${num}` : '&nbsp;'}</div>${porParagrafo.get(par).join('')}`;
+  }).join('');
+  corpo.querySelectorAll('.paragrafo[data-par]').forEach((d) => (d.onclick = () => {
+    const alvo = c.querySelector(`.documento [data-pid="${d.dataset.par}"]`);
+    alvo?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }));
+  corpo.addEventListener('click', (ev) => { const a = ev.target.closest('a'); if (a) ev.preventDefault(); });
+}
+function mostrarNota(c, indice) {
+  if (!c.querySelector('.leitor').classList.contains('com-painel')) {
+    guardar('painel', true);
+    c.querySelector('.leitor').classList.add('com-painel');
+    $('#flutuante').innerHTML = icone('fechar_painel');
+  }
+  const bloco = c.querySelector(`.painel [data-nota="${indice}"]`);
+  if (!bloco) return;
+  c.querySelectorAll('.painel .foco').forEach((x) => x.classList.remove('foco'));
+  bloco.classList.add('foco');
+  bloco.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 // ---------- Telas ----------
 const TELAS = {
   vazia(c) {
@@ -170,23 +263,24 @@ const TELAS = {
   },
 
   inicio(c) {
-    barra('Início', 'Português (Brasil)', [['importar', 'Importar publicações', escolherArquivos]]);
-    const historico = ler('historico', []).slice(0, 8);
+    barra('Início', 'Português (Brasil)', [['importar', 'Importar publicações', escolherArquivos], ['historico', 'Histórico', historico], ['config', 'Configurações', configuracoes]]);
+    const lidos = ler('historico', []).slice(0, 8);
     const recentes = biblioteca.cartoes.slice().sort((a, b) => b.ano - a.ano || b.edicao - a.edicao).slice(0, 6);
     c.innerHTML = `<div class="tela">
       <div class="boas-vindas"><h1>Bem-vindo ao Leitor JW</h1>
         <p>${biblioteca.cartoes.length ? `${biblioteca.cartoes.length} publicações na sua biblioteca.` : 'Importe os arquivos .jwpub que você já tem para começar a ler.'}</p>
         <button class="botao" id="imp">Importar publicações</button></div>
-      ${historico.length ? `<div class="secao-titulo">Continuar lendo</div><div class="lista">${historico.map((h, i) =>
+      ${lidos.length ? `<div class="secao-titulo">Continuar lendo</div><div class="lista">${lidos.map((h, i) =>
         `<button class="item" data-h="${i}"><div><div class="t">${esc(h.titulo)}</div><div class="m">${esc(h.publicacao)}</div></div></button>`).join('')}</div>` : ''}
       ${recentes.length ? `<div class="secao-titulo">Mais recentes na biblioteca</div><div class="grade">${recentes.map((r) => cartao(r)).join('')}</div>` : ''}
     </div>`;
     $('#imp').onclick = escolherArquivos;
     c.querySelectorAll('[data-h]').forEach((b) => (b.onclick = () => {
-      const h = historico[+b.dataset.h];
+      const h = lidos[+b.dataset.h];
       abrir({ tela: 'documento', pasta: h.pasta, id: h.id });
     }));
     ligarCartoes(c);
+    faixaNovos(c);
   },
 
   biblia(c) {
@@ -204,7 +298,7 @@ const TELAS = {
 
   biblioteca(c, e) {
     const aba = e.aba || 'publicacoes';
-    const acoes = [['importar', 'Importar publicações', escolherArquivos]];
+    const acoes = [['importar', 'Importar publicações', escolherArquivos], ['historico', 'Histórico', historico]];
     if (aba === 'baixados') acoes.unshift(['ordenar', 'Ordenar', (ev, botao) => {
       const m = menu(botao, ['titulo:Título', 'maior:Maior arquivo', 'recente:Mais recentes'].map((o) => {
         const [k, n] = o.split(':');
@@ -233,15 +327,22 @@ const TELAS = {
       ligarCartoes(c);
     }
     c.querySelectorAll('[data-aba]').forEach((b) => (b.onclick = () => { e.aba = b.dataset.aba; desenhar(); }));
+    faixaNovos(c);
   },
 
   categoria(c, e) {
     const k = biblioteca.categorias.find((x) => x.chave === e.chave);
-    barra(k ? k.nome : 'Biblioteca', 'Português (Brasil)');
     const daqui = biblioteca.cartoes.filter((x) => x.categoria === e.chave).sort((a, b) => b.ano - a.ano || b.edicao - a.edicao);
     const anos = [...new Set(daqui.map((x) => x.ano))];
-    c.innerHTML = `<div class="tela">${anos.map((a) =>
-      `<div class="grupo">${a}</div><div class="grade">${daqui.filter((x) => x.ano === a).map((x) => cartao(x)).join('')}</div>`).join('')}</div>`;
+    const ano = e.ano ?? (anos.length === 1 ? anos[0] : null);
+    barra(k ? k.nome : 'Biblioteca', ano && anos.length > 1 ? String(ano) : 'Português (Brasil)', [['historico', 'Histórico', historico]]);
+    if (ano == null) {
+      c.innerHTML = `<div class="tela"><div class="grade">${anos.map((a) =>
+        `<button class="categoria ano" data-ano="${a}">${a}</button>`).join('')}</div></div>`;
+      c.querySelectorAll('[data-ano]').forEach((b) => (b.onclick = () => abrir({ tela: 'categoria', chave: e.chave, ano: +b.dataset.ano })));
+      return;
+    }
+    c.innerHTML = `<div class="tela"><div class="grade">${daqui.filter((x) => x.ano === ano).map((x) => cartao(x)).join('')}</div></div>`;
     ligarCartoes(c);
   },
 
@@ -262,19 +363,29 @@ const TELAS = {
     const d = await chamar('documento', { pasta: e.pasta, id: e.id });
     const tam = ler('tamanho', 18);
     const comPainel = ler('painel', false);
+    const textoConfig = (b) => {
+      const m = menu(b, `<div class="deslizante"><small>A</small><input type="range" min="13" max="30" value="${ler('tamanho', 18)}"><big>A</big></div>`);
+      m.querySelector('input').oninput = (x) => { guardar('tamanho', +x.target.value); $('.documento').style.setProperty('--tam', x.target.value + 'px'); };
+    };
     barra(d.titulo, d.publicacao, [
-      ['texto', 'Configurações de texto', (ev, b) => {
-        const m = menu(b, `<div class="deslizante"><small>A</small><input type="range" min="13" max="30" value="${ler('tamanho', 18)}"><big>A</big></div>`);
-        m.querySelector('input').oninput = (x) => { guardar('tamanho', +x.target.value); $('.documento').style.setProperty('--tam', x.target.value + 'px'); };
+      ['historico', 'Histórico', historico],
+      ['mais', 'Mais opções', (ev, b) => {
+        const m = menu(b, '<button data-o="texto">Configurações de texto</button><button data-o="tela">Tela inteira</button>');
+        m.onclick = async (x) => {
+          const o = x.target.dataset.o;
+          if (o === 'texto') textoConfig(b);
+          if (o === 'tela') { fecharMenu(); const j = tauri.window.getCurrentWindow(); j.setFullscreen(!(await j.isFullscreen())); }
+        };
       }],
     ]);
     c.innerHTML = `<div class="leitor${comPainel ? ' com-painel' : ''}">
       <div class="coluna"><article class="documento" style="--tam:${tam}px">${d.html}</article></div>
-      <aside class="painel"><h3>Painel de estudo</h3><p class="vazio" style="padding:20px 0">Notas de rodapé, referências e notas pessoais aparecem aqui (Etapas 2 a 4).</p></aside>
+      <aside class="painel"><h3>Painel de estudo</h3><div class="painel-corpo"><p class="vazio" style="padding:20px 0">Carregando…</p></div></aside>
     </div>
     ${d.anterior ? `<button class="seta esq" title="Anterior">${icone('esq')}</button>` : ''}
     ${d.seguinte ? `<button class="seta dir" title="Seguinte">${icone('dir')}</button>` : ''}
     <button id="flutuante" title="${comPainel ? 'Esconder painel' : 'Mostrar painel'}">${icone(comPainel ? 'fechar_painel' : 'painel')}</button>`;
+    montarPainel(c, e);
     const trocar = (id) => { pilhas[secao][pilhas[secao].length - 1] = { tela: 'documento', pasta: e.pasta, id }; desenhar(); };
     c.querySelector('.seta.esq')?.addEventListener('click', () => trocar(d.anterior));
     c.querySelector('.seta.dir')?.addEventListener('click', () => trocar(d.seguinte));
@@ -287,6 +398,9 @@ const TELAS = {
         const achado = await chamar('achar_meps', { meps: +a.dataset.meps });
         if (achado) abrir({ tela: 'documento', pasta: achado[0], id: achado[1] });
         else aviso('Essa publicação não está na sua biblioteca.');
+      } else if (a.dataset.fnid) {
+        ev.preventDefault();
+        mostrarNota(c, a.dataset.fnid);
       } else if (a.dataset.biblia) {
         ev.preventDefault();
         aviso('Os textos bíblicos abrem no painel a partir da Etapa 3.');
@@ -301,9 +415,32 @@ const TELAS = {
     guardar('historico', h.slice(0, 30));
   },
 
-  reunioes(c) {
-    barra('Reuniões', 'Português (Brasil)');
-    c.innerHTML = '<div class="vazio"><h2>Reuniões</h2><p>O seletor de semana com a apostila e A Sentinela chega na Etapa 2.</p></div>';
+  async reunioes(c, e) {
+    barra('Reuniões', 'Português (Brasil)', [['historico', 'Histórico', historico]]);
+    const hoje = new Date();
+    const seg = e.segunda ? new Date(e.segunda) : new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - ((hoje.getDay() + 6) % 7));
+    const dom = new Date(seg.getFullYear(), seg.getMonth(), seg.getDate() + 6);
+    const n = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    const mes = (d) => d.toLocaleDateString('pt-BR', { month: 'long' });
+    const rotulo = seg.getMonth() === dom.getMonth() ? `${seg.getDate()}-${dom.getDate()} de ${mes(dom)}` : `${seg.getDate()} de ${mes(seg)} – ${dom.getDate()} de ${mes(dom)}`;
+    const atual = n(hoje) >= n(seg) && n(hoje) <= n(dom);
+    const s = await chamar('semana', { data: n(seg) });
+    const parte = (titulo, x, falta) => `<div class="reuniao"><h3>${titulo}</h3>${x
+      ? `<button class="item" data-pasta="${esc(x.pasta)}" data-id="${x.id}">${x.miniatura ? `<img src="${base}/midia/${encodeURIComponent(x.pasta)}/${encodeURIComponent(x.miniatura)}" alt="">` : ''}<div><div class="t">${esc(x.titulo)}</div><div class="m">${esc(x.publicacao)}</div></div></button>`
+      : `<p class="falta">${falta}</p>`}</div>`;
+    c.innerHTML = `<div class="tela">
+      <div class="semana-nav"><button class="seta-s" data-mover="-7" title="Semana anterior">${icone('esq')}</button>
+        <div class="data">${rotulo}<small>${atual ? 'Esta semana' : seg.getFullYear()}</small></div>
+        <button class="seta-s" data-mover="7" title="Semana seguinte">${icone('dir')}</button></div>
+      ${parte('Vida e Ministério', s.apostila, 'Importe a Apostila Vida e Ministério que cobre esta semana (arquivo mwb_….jwpub).')}
+      ${parte('Estudo de A Sentinela', s.sentinela, 'Importe a edição de estudo de A Sentinela que cobre esta semana (arquivo w_….jwpub).')}
+    </div>`;
+    c.querySelectorAll('[data-mover]').forEach((b) => (b.onclick = () => {
+      const d = new Date(seg.getFullYear(), seg.getMonth(), seg.getDate() + +b.dataset.mover);
+      e.segunda = d.toISOString();
+      desenhar();
+    }));
+    c.querySelectorAll('.item[data-pasta]').forEach((b) => (b.onclick = () => abrir({ tela: 'documento', pasta: b.dataset.pasta, id: +b.dataset.id })));
   },
 
   estudo(c) {
@@ -313,6 +450,7 @@ const TELAS = {
 };
 
 (async () => {
+  aplicarTema();
   montarTrilho();
   try { await carregarBiblioteca(); } catch (e) { aviso('Erro ao ler a biblioteca: ' + e); }
   ouvirArrastar();

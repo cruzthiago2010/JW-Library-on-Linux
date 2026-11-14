@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use leitor_nucleo::{biblioteca, jwpub, leitor};
+use leitor_nucleo::{biblioteca, estudo, jwpub, leitor, reunioes};
 use tauri::http::{header, Request, Response, StatusCode};
 use tauri::{Manager, UriSchemeContext};
 
@@ -141,6 +141,63 @@ async fn achar_meps(app: tauri::AppHandle, meps: i64) -> Result<Option<(String, 
     .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn painel(app: tauri::AppHandle, pasta: String, id: i64) -> Result<estudo::Painel, String> {
+    let raiz = raiz(&app);
+    tauri::async_runtime::spawn_blocking(move || {
+        let p = jwpub::Publicacao::abrir(&raiz, &pasta)?;
+        estudo::painel(&p, id, base())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// A semana que contém `data` (AAAAMMDD): apostila e Sentinela instaladas.
+#[tauri::command]
+async fn semana(app: tauri::AppHandle, data: i64) -> Result<reunioes::Semana, String> {
+    let raiz = raiz(&app);
+    tauri::async_runtime::spawn_blocking(move || reunioes::semana(&raiz, data))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[derive(serde::Serialize)]
+struct Novo {
+    caminho: String,
+    nome: String,
+}
+
+/// Arquivos .jwpub na pasta Downloads que ainda não estão na biblioteca
+/// (ou que mudaram de tamanho desde a importação).
+#[tauri::command]
+async fn novos_em_downloads(app: tauri::AppHandle) -> Result<Vec<Novo>, String> {
+    let raiz = raiz(&app);
+    let Ok(downloads) = app.path().download_dir() else { return Ok(vec![]) };
+    tauri::async_runtime::spawn_blocking(move || {
+        let Ok(itens) = fs::read_dir(&downloads) else { return vec![] };
+        let mut novos: Vec<Novo> = itens
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .filter(|c| c.extension().and_then(|x| x.to_str()).map(|x| x.eq_ignore_ascii_case("jwpub")) == Some(true))
+            .filter(|c| {
+                let Some(pasta) = c.file_stem().and_then(|s| s.to_str()).and_then(jwpub::nome_seguro) else { return false };
+                let marca = raiz.join(pasta).join("instalado.json");
+                let tamanho = fs::metadata(c).map(|m| m.len()).unwrap_or(0);
+                let instalado = fs::read_to_string(marca)
+                    .ok()
+                    .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok())
+                    .and_then(|j| j.get("tamanho").and_then(|t| t.as_u64()));
+                instalado != Some(tamanho)
+            })
+            .map(|c| Novo { nome: nome(&c), caminho: c.to_string_lossy().into_owned() })
+            .collect();
+        novos.sort_by(|a, b| a.nome.cmp(&b.nome));
+        novos
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+
 fn tipo(nome: &str) -> &'static str {
     match nome.rsplit('.').next().map(|e| e.to_ascii_lowercase()).as_deref() {
         Some("jpg" | "jpeg") => "image/jpeg",
@@ -185,7 +242,7 @@ pub fn run() {
             app.manage(Estado { raiz });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps])
+        .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");
 }

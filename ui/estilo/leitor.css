@@ -73,8 +73,10 @@
 /* Texto do original que não usamos neste leitor. */
 .documento .gen-flipbook, .documento .pm-flipbook-gallery { display: none; }
 
+/* Tema escuro: os fundos claros das publicações ficam escuros. */
 @media (prefers-color-scheme: dark) {
-  /* Cores claras das publicações ficam escuras no tema escuro. */
-  .documento [class*="du-bgColor--"][class*="-50"],
-  .documento [class*="du-bgColor--"][class*="-100"] { background-color: var(--fundo-bloco) !important; }
+  :root:not([data-tema="claro"]) .documento [class*="du-bgColor--"][class*="-50"],
+  :root:not([data-tema="claro"]) .documento [class*="du-bgColor--"][class*="-100"] { background-color: var(--fundo-bloco) !important; }
 }
+:root[data-tema="escuro"] .documento [class*="du-bgColor--"][class*="-50"],
+:root[data-tema="escuro"] .documento [class*="du-bgColor--"][class*="-100"] { background-color: var(--fundo-bloco) !important; }

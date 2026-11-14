@@ -14,8 +14,9 @@
   --sombra: 0 4px 18px rgba(0, 0, 0, .18);
   color-scheme: light dark;
 }
+/* Tema escuro: pelo sistema (Aparência "Padrão do sistema") ou escolhido em Configurações. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema="claro"]) {
     --roxo: #9d8bdc;
     --roxo-escuro: #2a2340;
     --roxo-claro: #b6a7ec;
@@ -26,8 +27,23 @@
     --texto: #e8e6ee;
     --texto-suave: #a8a4b3;
     --borda: #3a3842;
+    color-scheme: dark;
   }
 }
+:root[data-tema="escuro"] {
+    --roxo: #9d8bdc;
+    --roxo-escuro: #2a2340;
+    --roxo-claro: #b6a7ec;
+    --azul-texto: #7fb0f5;
+    --fundo: #1c1b20;
+    --fundo-bloco: #26252b;
+    --fundo-comandos: #232228;
+    --texto: #e8e6ee;
+    --texto-suave: #a8a4b3;
+    --borda: #3a3842;
+    color-scheme: dark;
+}
+:root[data-tema="claro"] { color-scheme: light; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -173,3 +189,46 @@ body.soltando #soltar { display: grid; }
 .boas-vindas h1 { color: var(--roxo); font-weight: 600; font-size: 22px; margin: 0 0 8px; }
 .boas-vindas p { color: var(--texto-suave); margin: 0 0 16px; }
 .secao-titulo { font-size: 17px; font-weight: 600; color: var(--roxo); margin: 26px 0 12px; }
+
+/* Painel de estudo. */
+.painel .bloco { background: var(--fundo); border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; line-height: 1.5; user-select: text; }
+.painel .bloco .rotulo { font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--texto-suave); text-transform: uppercase; margin-bottom: 6px; }
+.painel .bloco.foco { outline: 2px solid var(--roxo-claro); }
+.painel .bloco p { margin: 0 0 6px; }
+.painel .bloco a { color: var(--azul-texto); text-decoration: none; }
+.painel .paragrafo { font-size: 12px; color: var(--roxo); font-weight: 700; margin: 14px 0 6px; }
+.documento [data-pid].realce { background: rgba(123, 104, 181, .14); border-radius: 3px; }
+
+/* Reuniões. */
+.semana-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 4px 0 22px; }
+.semana-nav .data { font-size: 16px; font-weight: 600; min-width: 260px; text-align: center; }
+.semana-nav .data small { display: block; font-weight: 400; color: var(--texto-suave); font-size: 12px; }
+.semana-nav button.seta-s { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--roxo); }
+.semana-nav button.seta-s:hover { background: var(--fundo-bloco); }
+.reuniao { background: var(--fundo-bloco); border-radius: 4px; padding: 14px 18px; margin-bottom: 14px; }
+.reuniao h3 { margin: 0 0 10px; color: var(--roxo); font-size: 15px; }
+.reuniao .falta { color: var(--texto-suave); }
+
+/* Anos (categoria). */
+.ano { font-size: 22px; font-weight: 600; color: var(--roxo); justify-content: center; }
+
+/* Diálogo central (Histórico, Configurações). */
+.fundo-dialogo { position: fixed; inset: 0; background: rgba(0, 0, 0, .35); z-index: 80; display: grid; place-items: center; }
+.dialogo { background: var(--fundo); width: 430px; max-width: 92vw; max-height: 80vh; border-radius: 8px; box-shadow: var(--sombra); display: flex; flex-direction: column; }
+.dialogo h2 { margin: 0; padding: 18px 20px 10px; font-size: 18px; }
+.dialogo .corpo { overflow: auto; padding: 0 20px 10px; }
+.dialogo .rodape { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 1px solid var(--borda); }
+.dialogo .opcao { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--borda); gap: 12px; }
+.dialogo select { font: inherit; padding: 6px 8px; border: 1px solid var(--borda); border-radius: 4px; background: var(--fundo); color: var(--texto); }
+.dialogo .item { width: 100%; }
+
+/* Faixa de arquivos novos em Downloads. */
+.faixa-novos { display: flex; align-items: center; gap: 14px; background: var(--roxo-escuro); color: #fff; padding: 10px 16px; border-radius: 4px; margin-bottom: 18px; }
+.faixa-novos span { flex: 1; }
+.faixa-novos .botao { background: #fff; color: var(--roxo-escuro); }
+.reuniao .item { width: 100%; border: 0; }
+.painel .bloco h1 { font-size: 18px; margin: 4px 0 8px; }
+.painel .bloco h2 { font-size: 16px; margin: 4px 0 6px; }
+.painel .bloco ol, .painel .bloco ul { list-style: none; padding-left: 0; }
+.painel .bloco img { max-width: 100%; }
+.painel .paragrafo { cursor: pointer; }
