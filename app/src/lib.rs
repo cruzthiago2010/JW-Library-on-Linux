@@ -4,12 +4,13 @@ use std::borrow::Cow;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use leitor_nucleo::{biblioteca, estudo, jwpub, leitor, reunioes};
+use leitor_nucleo::{biblia, biblioteca, busca, estudo, jwpub, leitor, reunioes};
 use tauri::http::{header, Request, Response, StatusCode};
 use tauri::{Manager, UriSchemeContext};
 
 struct Estado {
     raiz: PathBuf,
+    dados: PathBuf,
 }
 
 /// O começo do endereço do protocolo `conteudo` na plataforma.
@@ -198,6 +199,102 @@ async fn novos_em_downloads(app: tauri::AppHandle) -> Result<Vec<Novo>, String> 
     .map_err(|e| e.to_string())
 }
 
+fn achar_biblia(raiz: &Path) -> Result<biblia::Biblia, String> {
+    biblia::Biblia::achar(raiz).ok_or_else(|| "Nenhuma Bíblia instalada".to_string())
+}
+
+#[derive(serde::Serialize)]
+struct Livros {
+    publicacao: String,
+    livros: Vec<biblia::Livro>,
+}
+
+#[tauri::command]
+async fn livros(app: tauri::AppHandle) -> Result<Livros, String> {
+    let raiz = raiz(&app);
+    tauri::async_runtime::spawn_blocking(move || {
+        let b = achar_biblia(&raiz)?;
+        Ok(Livros { livros: b.livros()?, publicacao: b.publicacao.titulo })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[derive(serde::Serialize)]
+struct Capitulo {
+    livro: u32,
+    capitulo: u32,
+    titulo: String,
+    publicacao: String,
+    html: String,
+    notas: Vec<biblia::NotaDeEstudo>,
+    anterior: Option<(u32, u32)>,
+    seguinte: Option<(u32, u32)>,
+}
+
+#[tauri::command]
+async fn capitulo(app: tauri::AppHandle, livro: u32, capitulo: u32) -> Result<Capitulo, String> {
+    let raiz = raiz(&app);
+    tauri::async_runtime::spawn_blocking(move || {
+        let b = achar_biblia(&raiz)?;
+        let livros = b.livros()?;
+        let total = |l: u32| livros.get(l as usize - 1).map(|x| x.capitulos).unwrap_or(1);
+        let anterior = if capitulo > 1 { Some((livro, capitulo - 1)) } else if livro > 1 { Some((livro - 1, total(livro - 1))) } else { None };
+        let seguinte = if capitulo < total(livro) { Some((livro, capitulo + 1)) } else if livro < 66 { Some((livro + 1, 1)) } else { None };
+        let html = b.capitulo(livro, capitulo)?;
+        Ok(Capitulo {
+            html: leitor::ajustar_html(&html, &b.publicacao.pasta, base()),
+            notas: b.notas_de_estudo(livro, capitulo, base())?,
+            titulo: format!("{} {capitulo}", biblia::NOMES[livro as usize - 1]),
+            publicacao: b.publicacao.titulo,
+            livro,
+            capitulo,
+            anterior,
+            seguinte,
+        })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn referencias(app: tauri::AppHandle, livro: u32, capitulo: u32, mid: i64) -> Result<Vec<biblia::Referencia>, String> {
+    let raiz = raiz(&app);
+    tauri::async_runtime::spawn_blocking(move || achar_biblia(&raiz)?.referencias_com_texto(livro, capitulo, mid))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// O texto de um link bíblico de artigo (`NWTR/43:3:16-43:3:18`) ou de uma faixa `inicio-fim`.
+#[tauri::command]
+async fn texto_biblico(app: tauri::AppHandle, link: String) -> Result<biblia::Referencia, String> {
+    let raiz = raiz(&app);
+    tauri::async_runtime::spawn_blocking(move || {
+        let (a, b) = biblia::faixa_do_link(&link).or_else(|| biblia::faixa(&link)).ok_or("referência inválida")?;
+        achar_biblia(&raiz)?.referencia(a, b)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[derive(serde::Serialize)]
+struct Busca {
+    total: usize,
+    achados: Vec<busca::Achado>,
+}
+
+#[tauri::command]
+async fn buscar_biblia(app: tauri::AppHandle, termos: String, exata: bool) -> Result<Busca, String> {
+    let raiz = raiz(&app);
+    let indice = app.state::<Estado>().dados.join("busca.db");
+    tauri::async_runtime::spawn_blocking(move || {
+        let (total, achados) = busca::buscar(&raiz, &indice, &termos, exata, 300)?;
+        Ok(Busca { total, achados })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 fn tipo(nome: &str) -> &'static str {
     match nome.rsplit('.').next().map(|e| e.to_ascii_lowercase()).as_deref() {
         Some("jpg" | "jpeg") => "image/jpeg",
@@ -237,12 +334,15 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .register_uri_scheme_protocol("conteudo", servir)
         .setup(|app| {
-            let raiz = app.path().app_data_dir()?.join("biblioteca");
+            let dados = app.path().app_data_dir()?;
+            let raiz = dados.join("biblioteca");
             fs::create_dir_all(&raiz)?;
-            app.manage(Estado { raiz });
+            app.manage(Estado { raiz, dados });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads])
+        .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
+            livros, capitulo, referencias, texto_biblico, buscar_biblia
+        ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");
 }

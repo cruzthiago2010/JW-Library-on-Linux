@@ -232,3 +232,40 @@ body.soltando #soltar { display: grid; }
 .painel .bloco ol, .painel .bloco ul { list-style: none; padding-left: 0; }
 .painel .bloco img { max-width: 100%; }
 .painel .paragrafo { cursor: pointer; }
+
+/* Bíblia: grade de livros (como no JW Library do Windows: azulejos roxos). */
+.testamentos { display: grid; grid-template-columns: 4fr 3fr; gap: 28px; }
+.livros { display: grid; gap: 6px; }
+.livros.hebr { grid-template-columns: repeat(4, 1fr); }
+.livros.greg { grid-template-columns: repeat(3, 1fr); }
+.livro { background: var(--roxo-escuro); color: #fff; text-align: left; padding: 10px 10px; border-radius: 2px; font-size: 13px; min-height: 40px; }
+.livro:hover { background: var(--roxo); }
+.livros.greg .livro { background: #4b3f6b; }
+.faixa-livro { background: var(--roxo-escuro); color: #fff; font-size: 26px; font-weight: 600; padding: 40px 28px; border-radius: 3px; margin-bottom: 22px; }
+.capitulos { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-width: 760px; }
+.capitulos button { background: var(--fundo-bloco); border: 1px solid var(--borda); padding: 12px 0; border-radius: 2px; font-weight: 600; color: var(--roxo); }
+.capitulos button:hover { background: var(--roxo); color: #fff; }
+@media (max-width: 900px) { .testamentos { grid-template-columns: 1fr; } .capitulos { grid-template-columns: repeat(6, 1fr); } }
+
+/* Menu do versículo. */
+.menu.menu-verso { padding: 4px; min-width: 0; }
+.barra-verso { display: flex; gap: 2px; }
+.barra-verso button { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 64px; padding: 8px 4px; font-size: 11px; color: var(--roxo); border-radius: 4px; }
+.barra-verso button:hover { background: var(--fundo-bloco); }
+
+/* Topo do painel (referências, texto bíblico). */
+.painel-topo:not(:empty) { border-bottom: 2px solid var(--borda); padding-bottom: 8px; margin-bottom: 12px; }
+.topo-cab { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: var(--roxo); margin-bottom: 8px; }
+.topo-cab button { font-size: 20px; width: 28px; height: 28px; border-radius: 4px; }
+.topo-cab button:hover { background: var(--fundo); }
+.texto-biblico .versos { font-family: "Noto Serif", "DejaVu Serif", serif; }
+.texto-biblico .vnum { font-weight: 700; color: var(--azul-texto); font-size: .8em; }
+.texto-biblico .m, .texto-biblico .fn { display: none; }
+.link-capitulo { color: var(--azul-texto); font-weight: 600; margin-top: 8px; padding: 0; }
+
+/* Busca. */
+.campo-busca { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.campo-busca input[type=search] { flex: 1; min-width: 240px; font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid var(--borda); border-radius: 4px; background: var(--fundo); color: var(--texto); }
+.contador { color: var(--texto-suave); font-size: 13px; margin-bottom: 8px; }
+.achado .m { color: var(--texto); font-size: 14px; margin-top: 4px; line-height: 1.5; }
+.achado .t { font-weight: 600; }

@@ -26,3 +26,17 @@ fn painel_tem_notas() {
     assert!(painel.notas.iter().all(|n| !n.html.is_empty()));
     println!("trechos: {}", painel.trechos.len());
 }
+
+#[test]
+fn biblia_notas_referencias_e_busca() {
+    let Some(raiz) = raiz() else { return };
+    let b = leitor_nucleo::biblia::Biblia::achar(&raiz).expect("bíblia");
+    let notas = b.notas_de_estudo(43, 3, "conteudo://localhost").unwrap();
+    assert!(notas.iter().any(|n| n.verso == 16), "nota de estudo em João 3:16");
+    let refs = b.referencias_com_texto(43, 3, 78).unwrap();
+    assert!(!refs.is_empty());
+    let dir = std::env::temp_dir().join("leitor-busca-teste.db");
+    let (total, achados) = leitor_nucleo::busca::buscar(&raiz, &dir, "nascer de novo", true, 10).unwrap();
+    assert!(total >= 1 && achados.iter().any(|a| a.codigo / 1000 == 43003), "{total}");
+    let _ = std::fs::remove_file(dir);
+}

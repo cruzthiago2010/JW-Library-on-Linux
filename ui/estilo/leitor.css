@@ -80,3 +80,17 @@
 }
 :root[data-tema="escuro"] .documento [class*="du-bgColor--"][class*="-50"],
 :root[data-tema="escuro"] .documento [class*="du-bgColor--"][class*="-100"] { background-color: var(--fundo-bloco) !important; }
+
+/* Texto da Bíblia: número do capítulo grande, versículos e letras clicáveis. */
+.documento.biblia { line-height: 1.75; }
+.documento.biblia p { margin-bottom: 10px; }
+.documento .tt { display: none; }
+.documento .cl strong { float: left; font-size: 3.2em; line-height: .9; margin: 6px 12px 0 0; color: var(--roxo); font-family: "Noto Sans", sans-serif; }
+.documento .vl { font-weight: 700; color: var(--azul-texto); font-size: .72em; vertical-align: super; line-height: 0; cursor: pointer; padding: 0 2px; font-family: "Noto Sans", sans-serif; }
+.documento .cl { cursor: pointer; }
+.documento .m { color: var(--azul-texto); font-size: .62em; vertical-align: super; line-height: 0; cursor: pointer; font-style: italic; padding: 0 1px; }
+.documento .m:hover, .documento .vl:hover { text-decoration: underline; }
+.documento.esmaecido .v { opacity: .35; }
+.documento.esmaecido .v.escolhido { opacity: 1; background: rgba(123, 104, 181, .16); }
+.documento .realce-v { background: rgba(240, 200, 60, .35); transition: background .6s; }
+.documento .se { font-weight: 700; }
