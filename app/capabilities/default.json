@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Janela principal: o básico do Tauri e o diálogo de abrir arquivo.",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:allow-open", "dialog:allow-message"]
+  "permissions": ["core:default", "dialog:allow-open", "dialog:allow-save", "dialog:allow-message"]
 }

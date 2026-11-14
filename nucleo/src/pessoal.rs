@@ -16,6 +16,9 @@ use std::path::Path;
 
 use rusqlite::{params, Connection, OptionalExtension};
 
+/// A conexão, para quem precisa fechar o banco (restaurar backup).
+pub type Conexao = Connection;
+
 use crate::jwpub::Publicacao;
 
 pub type Resultado<T> = Result<T, String>;

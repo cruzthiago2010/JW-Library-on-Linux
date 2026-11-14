@@ -125,7 +125,7 @@ function dialogo(titulo, corpo, botoes = [['Fechar', null]]) {
   const rodape = f.querySelector('.rodape');
   for (const [nome, fn] of botoes) {
     const b = document.createElement('button');
-    b.className = 'botao' + (fn ? ' leve' : '');
+    b.className = 'botao' + (fn || botoes.length === 1 ? '' : ' leve');
     b.textContent = nome;
     b.onclick = () => { if (fn) fn(); f.remove(); };
     rodape.appendChild(b);
@@ -359,7 +359,42 @@ function guardarHistorico(item) {
 }
 const abrirDoHistorico = (x) => abrir(x.tela === 'capitulo' ? { tela: 'capitulo', livro: x.livro, capitulo: x.capitulo } : { tela: 'documento', pasta: x.pasta, id: x.id });
 
-function backup() { aviso('Backup e restauração chegam na Etapa 5.'); }
+async function backup() {
+  const r = await chamar('resumo_pessoal');
+  const conta = (x) => `${x.grifos} grifos, ${x.notas} notas, ${x.etiquetas} etiquetas e ${x.marcadores} marcadores`;
+  const corpo = `<p>Neste computador: ${conta(r)}.</p>
+    <p>O backup usa o mesmo formato do JW Library (.jwlibrary): dá para levar para o celular ou trazer de lá.</p>`;
+  const f = dialogo('Backup e restauração', corpo, [['Fechar', null]]);
+  const rodape = f.querySelector('.rodape');
+  const criar = document.createElement('button');
+  criar.className = 'botao';
+  criar.textContent = 'Criar backup';
+  const restaurar = document.createElement('button');
+  restaurar.className = 'botao leve';
+  restaurar.textContent = 'Restaurar backup';
+  rodape.prepend(criar, restaurar);
+  criar.onclick = async () => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const destino = await tauri.dialog.save({ title: 'Criar backup', defaultPath: `UserdataBackup_${hoje}_Leitor_JW.jwlibrary`, filters: [{ name: 'Backup do JW Library', extensions: ['jwlibrary'] }] });
+    if (!destino) return;
+    try { const x = await chamar('criar_backup', { destino }); f.remove(); aviso(`Backup criado com ${conta(x)}.`, 6000); }
+    catch (erro) { aviso('Não deu para criar o backup: ' + erro, 8000); }
+  };
+  restaurar.onclick = async () => {
+    const arquivo = await tauri.dialog.open({ title: 'Restaurar backup', multiple: false, filters: [{ name: 'Backup do JW Library', extensions: ['jwlibrary'] }] });
+    if (!arquivo) return;
+    let x;
+    try { x = await chamar('conferir_backup', { arquivo }); } catch (erro) { return aviso('Este arquivo não serve: ' + erro, 8000); }
+    f.remove();
+    const quando = x.data ? new Date(x.data).toLocaleString('pt-BR') : '';
+    dialogo('Restaurar backup', `<p>O backup${x.aparelho ? ` de <b>${esc(x.aparelho)}</b>` : ''}${quando ? ` (${esc(quando)})` : ''} tem ${conta(x)}.</p>
+      <p>Ele <b>substitui</b> todo o estudo pessoal deste computador. Uma cópia do que existe agora fica guardada.</p>`,
+      [['Cancelar', null], ['Restaurar', async () => {
+        try { const y = await chamar('restaurar_backup'); aviso(`Restaurado: ${conta(y)}.`, 6000); desenhar(); }
+        catch (erro) { aviso('Não deu para restaurar: ' + erro, 8000); }
+      }]]);
+  };
+}
 
 // ---------- Telas ----------
 const TELAS = {
@@ -636,7 +671,7 @@ const TELAS = {
 
   async estudo(c, e) {
     barra('Notas e etiquetas', 'Estudo Pessoal', [
-      ['importar', 'Backup e restauração', () => backup()],
+      ['nuvem', 'Backup e restauração', () => backup()],
       ['historico', 'Histórico', historico],
     ]);
     const [notas, etiquetas] = await Promise.all([chamar('notas', { filtro: e.filtro || '', etiqueta: e.etiqueta || null }), chamar('etiquetas')]);

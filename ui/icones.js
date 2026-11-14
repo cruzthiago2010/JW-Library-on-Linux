@@ -26,6 +26,7 @@ const ICONES = {
   nota: '<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M9 13h6M12 10v6"/>',
   lixeira: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
   marcador: '<path d="M7 3h10v18l-5-4-5 4z"/>',
+  nuvem: '<path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.1 4.5 4.5 0 0 0 7 18z"/><path d="M12 16v-6M9.5 12.5L12 10l2.5 2.5"/>',
   config: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
 };
 function icone(nome, classe = 'ic') {

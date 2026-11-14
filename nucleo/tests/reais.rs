@@ -40,3 +40,13 @@ fn biblia_notas_referencias_e_busca() {
     assert!(total >= 1 && achados.iter().any(|a| a.codigo / 1000 == 43003), "{total}");
     let _ = std::fs::remove_file(dir);
 }
+
+#[test]
+fn restaura_backup_real_do_aparelho() {
+    let Ok(arquivo) = std::env::var("LEITOR_BACKUP") else { return };
+    let saida = std::env::temp_dir().join("leitor-restaurado.db");
+    let r = leitor_nucleo::backup::extrair(std::path::Path::new(&arquivo), &saida).unwrap();
+    assert!(r.grifos > 0);
+    println!("{r:?}");
+    let _ = std::fs::remove_file(saida);
+}

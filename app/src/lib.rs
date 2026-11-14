@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use leitor_nucleo::pessoal::{self, Alvo, Faixa, Identidade, Pessoal};
-use leitor_nucleo::{biblia, biblioteca, busca, estudo, jwpub, leitor, reunioes};
+use leitor_nucleo::{backup, biblia, biblioteca, busca, estudo, jwpub, leitor, reunioes};
 use tauri::http::{header, Request, Response, StatusCode};
 use tauri::{Manager, UriSchemeContext};
 
@@ -353,7 +353,23 @@ fn campo(app: tauri::AppHandle, alvo: Alvo, tag: String, valor: String) -> Resul
 
 #[tauri::command]
 fn notas(app: tauri::AppHandle, filtro: String, etiqueta: Option<String>) -> Result<Vec<pessoal::NotaComOrigem>, String> {
-    app.state::<Estado>().pessoal.lock().map_err(|e| e.to_string())?.todas_as_notas(&filtro, etiqueta.as_deref())
+    let estado = app.state::<Estado>();
+    let mut lista = estado.pessoal.lock().map_err(|e| e.to_string())?.todas_as_notas(&filtro, etiqueta.as_deref())?;
+    // A origem legível: "Romanos 14", ou "Título do artigo — Publicação" se estiver instalada.
+    let instaladas = jwpub::instaladas(&estado.raiz);
+    for n in lista.iter_mut() {
+        if let (Some(l), Some(c)) = (n.livro, n.capitulo) {
+            n.origem = format!("{} {c}", biblia::NOMES.get(l as usize - 1).copied().unwrap_or("?"));
+        } else if let Some(meps) = n.meps {
+            if let Some((p, id)) = instaladas.iter().find_map(|p| p.pelo_meps(meps).map(|id| (p, id))) {
+                let titulo = p.documento(id).map(|d| d.titulo).unwrap_or_default();
+                n.origem = format!("{titulo} — {}", p.titulo);
+            } else if n.origem.is_empty() {
+                n.origem = format!("{} (não instalada)", n.simbolo);
+            }
+        }
+    }
+    Ok(lista)
 }
 
 #[tauri::command]
@@ -379,6 +395,55 @@ fn marcar(app: tauri::AppHandle, alvo: Alvo, slot: i64, bloco: Option<i64>, trec
 #[tauri::command]
 fn desmarcar(app: tauri::AppHandle, alvo: Alvo, slot: i64) -> Result<(), String> {
     com_pessoal(&app, &alvo, |p, id| p.desmarcar(id, slot))
+}
+
+// ---------------------------------------------------------------- backup
+
+#[tauri::command]
+fn resumo_pessoal(app: tauri::AppHandle) -> Result<backup::Resumo, String> {
+    let estado = app.state::<Estado>();
+    let _trava = estado.pessoal.lock().map_err(|e| e.to_string())?;
+    backup::resumo(&estado.dados.join("userData.db"))
+}
+
+#[tauri::command]
+fn criar_backup(app: tauri::AppHandle, destino: String) -> Result<backup::Resumo, String> {
+    let estado = app.state::<Estado>();
+    let _trava = estado.pessoal.lock().map_err(|e| e.to_string())?;
+    let mut destino = PathBuf::from(destino);
+    if destino.extension().and_then(|e| e.to_str()) != Some("jwlibrary") {
+        destino.set_extension("jwlibrary");
+    }
+    backup::criar(&estado.dados.join("userData.db"), &destino, "Leitor JW (Linux)")
+}
+
+/// Confere o backup e mostra o que tem, sem trocar nada ainda.
+#[tauri::command]
+fn conferir_backup(app: tauri::AppHandle, arquivo: String) -> Result<backup::Resumo, String> {
+    let estado = app.state::<Estado>();
+    backup::extrair(Path::new(&arquivo), &estado.dados.join("userData.restaurar.db"))
+}
+
+/// Troca o estudo pessoal pelo do backup conferido. O de antes fica em `userData.antes.db`.
+#[tauri::command]
+fn restaurar_backup(app: tauri::AppHandle) -> Result<backup::Resumo, String> {
+    let estado = app.state::<Estado>();
+    let novo = estado.dados.join("userData.restaurar.db");
+    if !novo.exists() {
+        return Err("confira o backup antes de restaurar".into());
+    }
+    let atual = estado.dados.join("userData.db");
+    let mut p = estado.pessoal.lock().map_err(|e| e.to_string())?;
+    // Fecha o banco atual antes de trocar o arquivo.
+    *p = Pessoal { conexao: rusqlite_em_memoria()? };
+    let _ = fs::copy(&atual, estado.dados.join("userData.antes.db"));
+    fs::rename(&novo, &atual).map_err(|e| e.to_string())?;
+    *p = Pessoal::abrir(&atual)?;
+    backup::resumo(&atual)
+}
+
+fn rusqlite_em_memoria() -> Result<leitor_nucleo::pessoal::Conexao, String> {
+    leitor_nucleo::pessoal::Conexao::open_in_memory().map_err(|e| e.to_string())
 }
 
 fn tipo(nome: &str) -> &'static str {
@@ -430,7 +495,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar
+            marcadores, marcar, desmarcar, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");
