@@ -1,3 +1,14 @@
+# JW Library on Linux 0.4.0
+
+- **Flatpak** (x86_64 e ARM64): instala em qualquer distribuição. O .deb deixa de existir; ficam **Flatpak** e **AppImage**. / Flatpak packages; the .deb is gone, Flatpak and AppImage remain.
+- Flatpak e AppImage usam a **mesma pasta** de publicações, grifos e notas (`~/.local/share/io.github.leitorjw`). / Both use the same data folder.
+- **Excluir publicação** como no JW Library: menu "..." do cartão (Abrir · Excluir). / Delete a publication from the card's "..." menu.
+
+## Instalar · Install
+
+- Flatpak: `flatpak install --user JW_Library_on_Linux-0.4.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`)
+- AppImage: `chmod +x JW_Library_on_Linux-0.4.0-x86_64.AppImage` e abra / and run it (ARM: `-aarch64.AppImage`)
+
 # JW Library on Linux 0.3.0
 
 - **Busca nas publicações**: a lupa da Biblioteca e do Início procura em todos os artigos e capítulos importados (a aba Bíblia continua buscando versículos). / **Search publications**: search every imported article and chapter.

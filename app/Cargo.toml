@@ -1,6 +1,6 @@
 [package]
 name = "leitor-jw"
-version = "0.3.0"
+version = "0.4.0"
 description = "Leitor de publicações .jwpub no estilo do JW Library, para Linux"
 edition = "2021"
 license = "GPL-3.0-or-later"

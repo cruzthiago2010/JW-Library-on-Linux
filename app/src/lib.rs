@@ -534,7 +534,13 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .register_uri_scheme_protocol("conteudo", servir)
         .setup(|app| {
-            let dados = app.path().app_data_dir()?;
+            // No Flatpak a pasta de dados seria ~/.var/app/<id>/…; usamos a mesma do
+            // AppImage (~/.local/share/io.github.leitorjw, liberada no manifesto),
+            // para as publicações e os grifos valerem nos dois e no baixador.
+            let dados = match (std::env::var_os("FLATPAK_ID"), std::env::var_os("HOME")) {
+                (Some(_), Some(casa)) => PathBuf::from(casa).join(".local/share").join(&app.config().identifier),
+                _ => app.path().app_data_dir()?,
+            };
             let raiz = dados.join("biblioteca");
             fs::create_dir_all(&raiz)?;
             let pessoal = Pessoal::abrir(&dados.join("userData.db")).map_err(|e| e.to_string())?;

@@ -1,4 +1,4 @@
-# Gera os instaladores (.deb e AppImage) para x86_64 e ARM64 quando uma tag vX.Y.Z é enviada,
+# Gera os instaladores (AppImage e Flatpak) para x86_64 e ARM64 quando uma tag vX.Y.Z é enviada,
 # e anexa os arquivos à release dessa tag (cria a release se ainda não existir).
 name: Versão
 on:
@@ -8,17 +8,15 @@ on:
 permissions:
   contents: write
 jobs:
-  pacotes:
+  appimage:
     strategy:
       fail-fast: false
       matrix:
         include:
           - runner: ubuntu-22.04
             arq: x86_64
-            deb: amd64
           - runner: ubuntu-22.04-arm
             arq: aarch64
-            deb: arm64
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -35,23 +33,58 @@ jobs:
         run: cargo test -p leitor-nucleo
       - name: Compilar
         working-directory: app
-        run: cargo tauri build --bundles deb,appimage
+        run: cargo tauri build --bundles appimage
       - name: Juntar os arquivos
         id: arquivos
         run: |
           V=$(grep -m1 '"version"' app/tauri.conf.json | sed -E 's/.*"([0-9.]+)".*/\1/')
           mkdir saida
-          cp target/release/bundle/deb/*.deb "saida/leitor-jw_${V}_${{ matrix.deb }}.deb"
           cp target/release/bundle/appimage/*.AppImage "saida/JW_Library_on_Linux-${V}-${{ matrix.arq }}.AppImage"
           ls -la saida
       - uses: actions/upload-artifact@v4
         with:
-          name: pacotes-${{ matrix.arq }}
+          name: appimage-${{ matrix.arq }}
           path: saida/*
       - name: Anexar à release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "JW Library on Linux ${GITHUB_REF_NAME#v}" --notes-file NOTAS-DA-VERSAO.md
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "JW Library on Linux ${GITHUB_REF_NAME#v}" --notes-file NOTAS-DA-VERSAO.md || true
           gh release upload "$GITHUB_REF_NAME" saida/* --clobber
+
+  flatpak:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arq: x86_64
+          - runner: ubuntu-24.04-arm
+            arq: aarch64
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-49
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Versão
+        id: v
+        run: echo "v=$(grep -m1 '"version"' app/tauri.conf.json | sed -E 's/.*"([0-9.]+)".*/\1/')" >> "$GITHUB_OUTPUT"
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: JW_Library_on_Linux-${{ steps.v.outputs.v }}-${{ matrix.arq }}.flatpak
+          manifest-path: empacotar/flatpak/io.github.cruzthiago2010.JWLibraryOnLinux.yml
+          arch: ${{ matrix.arq }}
+          cache-key: flatpak-${{ matrix.arq }}-${{ github.sha }}
+          upload-artifact: true
+      - name: Anexar à release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          command -v gh >/dev/null || { dnf install -y gh 2>/dev/null || (apt-get update && apt-get install -y gh); }
+          sleep 30
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "JW Library on Linux ${GITHUB_REF_NAME#v}" --notes-file NOTAS-DA-VERSAO.md || true
+          gh release upload "$GITHUB_REF_NAME" JW_Library_on_Linux-*.flatpak --clobber

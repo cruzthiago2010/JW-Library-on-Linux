@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=JW Library on Linux
+Comment=Read .jwpub publications on Linux
+Comment[pt_BR]=Leitor de publicações .jwpub para Linux
+Exec=leitor-jw
+Icon=io.github.cruzthiago2010.JWLibraryOnLinux
+Categories=Education;Literature;Office;Viewer;
+Keywords=jwpub;bible;bíblia;sentinela;watchtower;
+MimeType=application/x-jwpub;
+StartupWMClass=leitor-jw

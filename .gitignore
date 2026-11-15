@@ -8,3 +8,5 @@ dist/
 docs/prints-etapa4a6/
 docs/interno/
 baixador/
+compilacao/
+.flatpak-builder/

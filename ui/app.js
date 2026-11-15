@@ -2,7 +2,7 @@
 // (como no JW Library do Windows: voltar à seção devolve onde se parou; a seta ← sobe um nível).
 const tauri = window.__TAURI__;
 const chamar = (cmd, args) => tauri.core.invoke(cmd, args);
-const VERSAO = '0.3';
+const VERSAO = '0.4';
 
 const SECOES = [
   ['inicio', 'Início', 'inicio'],

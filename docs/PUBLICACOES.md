@@ -40,7 +40,7 @@ Ao importar, o app abre o `.jwpub` e guarda o conteúdo em:
 ```
 
 `~` é a sua pasta pessoal. A pasta `.local` fica oculta: no gerenciador de arquivos, aperte
-**Ctrl+H** para ver. O caminho é o mesmo no `.deb` e no AppImage.
+**Ctrl+H** para ver. O caminho é o mesmo no Flatpak e no AppImage.
 
 ### Bom saber
 
@@ -97,7 +97,7 @@ On import, the app unpacks the `.jwpub` into:
 ```
 
 `~` is your home folder. `.local` is hidden: press **Ctrl+H** in your file manager to see it.
-The path is the same for the `.deb` and the AppImage.
+The path is the same for the Flatpak and the AppImage.
 
 ### Good to know
 
