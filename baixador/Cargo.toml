@@ -1,0 +1,43 @@
+# Baixador de .jwpub, companheiro do JW Library on Linux.
+# Por enquanto é um workspace à parte (não mexe no Cargo.toml da raiz);
+# na Etapa 5 vira membro do workspace principal.
+[package]
+name = "jw-baixador"
+version = "0.1.0"
+description = "Baixa os .jwpub escolhidos e entrega na Biblioteca do JW Library on Linux"
+edition = "2021"
+license = "GPL-3.0-or-later"
+
+[lib]
+name = "baixador"
+path = "src/lib.rs"
+# Só "rlib" no PC (o disco é pequeno), como no app principal.
+crate-type = ["rlib"]
+
+[[bin]]
+name = "jw-baixador"
+path = "src/main.rs"
+
+[dependencies]
+leitor-nucleo = { path = "../nucleo" }
+ureq = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+md-5 = "0.10"
+dirs = "5"
+# A janela (Tauri 2). Sem a feature "janela" fica só a linha de comando:
+#   cargo build --no-default-features
+tauri = { version = "2", features = [], optional = true }
+libc = { version = "0.2", optional = true }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [], optional = true }
+
+[features]
+default = ["janela"]
+janela = ["dep:tauri", "dep:tauri-build", "dep:libc"]
+
+[workspace]
+
+[profile.dev.package.jw-baixador]
+debug = 0

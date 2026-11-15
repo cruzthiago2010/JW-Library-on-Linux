@@ -39,6 +39,23 @@ pub fn categoria_de(p: &Publicacao) -> &'static str {
 }
 
 pub fn nome_da_categoria(chave: &str) -> &'static str {
+    if crate::idioma::ingles() {
+        return match chave {
+            "biblia" => "Bibles",
+            "livros" => "Books",
+            "brochuras" => "Brochures and Booklets",
+            "folhetos" => "Tracts and Invitations",
+            "series" => "Article Series",
+            "sentinela" => "The Watchtower",
+            "despertai" => "Awake!",
+            "apostilas" => "Meeting Workbooks",
+            "ministerio" => "Kingdom Ministry",
+            "programas" => "Programs",
+            "indice" => "Indexes",
+            "orientacoes" => "Guidelines",
+            _ => "Other",
+        };
+    }
     CATEGORIAS.iter().find(|c| c.0 == chave).map(|c| c.1).unwrap_or("Outras")
 }
 

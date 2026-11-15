@@ -1,3 +1,13 @@
+# JW Library on Linux 0.2.0
+
+- **Interface em inglês e português.** Na primeira abertura o app pergunta o idioma; dá para trocar em Configurações. Os nomes dos livros da Bíblia e das categorias da Biblioteca também mudam.
+- **English and Portuguese interface.** The app asks for the language on first launch; you can change it in Settings. Bible book names and Library categories follow the chosen language.
+
+## Instalar · Install
+
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.2.0_amd64.deb`
+- Outras distribuições · Other distributions: `JW_Library_on_Linux-0.2.0-x86_64.AppImage`
+
 # JW Library on Linux 0.1.2
 
 - Logotipo e ícone novos.

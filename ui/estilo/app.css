@@ -324,3 +324,14 @@ body.soltando #soltar { display: grid; }
 
 /* O painel de estudo rola sozinho e fica parado enquanto o texto rola. */
 .leitor .painel { position: sticky; top: 0; height: calc(100vh - 80px); align-self: start; overflow: auto; }
+
+/* Primeira abertura: escolha do idioma. */
+.escolha-idioma { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: linear-gradient(135deg, #5b4a92, #241c40); color: #fff; }
+.escolha-idioma .caixa { text-align: center; max-width: 520px; padding: 24px; }
+.escolha-idioma h1 { font-size: 30px; margin: 18px 0 8px; }
+.escolha-idioma p { font-size: 17px; margin: 0 0 26px; opacity: .95; }
+.escolha-idioma p span { opacity: .7; }
+.escolha-idioma .opcoes { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
+.escolha-idioma .botao { background: #fff; color: #3b2f63; font-size: 17px; padding: 12px 26px; min-width: 200px; }
+.escolha-idioma .botao:hover { background: #ece8f8; }
+.escolha-idioma small { opacity: .65; font-size: 13px; }

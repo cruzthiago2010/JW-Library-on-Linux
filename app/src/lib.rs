@@ -204,7 +204,7 @@ async fn novos_em_downloads(app: tauri::AppHandle) -> Result<Vec<Novo>, String> 
 }
 
 fn achar_biblia(raiz: &Path) -> Result<biblia::Biblia, String> {
-    biblia::Biblia::achar(raiz).ok_or_else(|| "Nenhuma Bíblia instalada".to_string())
+    biblia::Biblia::achar(raiz).ok_or_else(|| leitor_nucleo::idioma::t("Nenhuma Bíblia instalada", "No Bible installed").to_string())
 }
 
 #[derive(serde::Serialize)]
@@ -249,7 +249,7 @@ async fn capitulo(app: tauri::AppHandle, livro: u32, capitulo: u32) -> Result<Ca
         Ok(Capitulo {
             html: leitor::ajustar_html(&html, &b.publicacao.pasta, base()),
             notas: b.notas_de_estudo(livro, capitulo, base())?,
-            titulo: format!("{} {capitulo}", biblia::NOMES[livro as usize - 1]),
+            titulo: format!("{} {capitulo}", biblia::nome(livro)),
             publicacao: b.publicacao.titulo,
             livro,
             capitulo,
@@ -306,7 +306,7 @@ fn identidade(raiz: &Path, alvo: &Alvo) -> Result<Identidade, String> {
         Alvo::Doc { pasta, id } => Identidade::de_documento(&jwpub::Publicacao::abrir(raiz, pasta)?, *id),
         Alvo::Biblia { livro, capitulo } => {
             let b = achar_biblia(raiz)?;
-            let nome = biblia::NOMES.get(*livro as usize - 1).copied().unwrap_or("?");
+            let nome = biblia::nome(*livro);
             Ok(Identidade::de_capitulo(&b.publicacao, *livro, *capitulo, format!("{nome} {capitulo}")))
         }
     }
@@ -359,7 +359,7 @@ fn notas(app: tauri::AppHandle, filtro: String, etiqueta: Option<String>) -> Res
     let instaladas = jwpub::instaladas(&estado.raiz);
     for n in lista.iter_mut() {
         if let (Some(l), Some(c)) = (n.livro, n.capitulo) {
-            n.origem = format!("{} {c}", biblia::NOMES.get(l as usize - 1).copied().unwrap_or("?"));
+            n.origem = format!("{} {c}", biblia::nome(l as u32));
         } else if let Some(meps) = n.meps {
             if let Some((p, id)) = instaladas.iter().find_map(|p| p.pelo_meps(meps).map(|id| (p, id))) {
                 let titulo = p.documento(id).map(|d| d.titulo).unwrap_or_default();
@@ -398,6 +398,12 @@ fn desmarcar(app: tauri::AppHandle, alvo: Alvo, slot: i64) -> Result<(), String>
 }
 
 // ---------------------------------------------------------------- backup
+
+/// O idioma da interface ("pt" ou "en"), escolhido na janela.
+#[tauri::command]
+fn definir_idioma(idioma: String) {
+    leitor_nucleo::idioma::definir(&idioma);
+}
 
 #[tauri::command]
 fn resumo_pessoal(app: tauri::AppHandle) -> Result<backup::Resumo, String> {
@@ -495,7 +501,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
+            marcadores, marcar, desmarcar, definir_idioma, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

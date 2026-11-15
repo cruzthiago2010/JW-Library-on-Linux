@@ -5,6 +5,7 @@ pub mod biblia;
 pub mod biblioteca;
 pub mod busca;
 pub mod estudo;
+pub mod idioma;
 pub mod jwpub;
 pub mod leitor;
 pub mod pessoal;

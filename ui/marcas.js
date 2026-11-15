@@ -125,7 +125,7 @@ const Marcas = (() => {
       if (!el) continue;
       const m = document.createElement('span');
       m.className = 'nota-marca cor-' + (cor || 0);
-      m.title = 'Tem nota';
+      m.title = t('Tem nota');
       m.dataset.bloco = bloco;
       el.prepend(m);
     }
@@ -140,11 +140,11 @@ const Marcas = (() => {
     fecharBarra();
     const b = document.createElement('div');
     b.className = 'barra-grifo';
-    b.innerHTML = `${CORES.map((k) => `<button class="cor cor-${k}${grifo && grifo.cor === k ? ' atual' : ''}" data-cor="${k}" title="${NOMES[k]}">${grifo && grifo.cor === k ? '✓' : ''}</button>`).join('')}
+    b.innerHTML = `${CORES.map((k) => `<button class="cor cor-${k}${grifo && grifo.cor === k ? ' atual' : ''}" data-cor="${k}" title="${t(NOMES[k])}">${grifo && grifo.cor === k ? '✓' : ''}</button>`).join('')}
       <span class="sep"></span>
-      <button data-o="nota" title="Adicionar uma nota">${icone('nota')}</button>
-      ${grifo ? `<button data-o="apagar" title="Tirar o grifo">${icone('lixeira')}</button>` : ''}
-      <button data-o="copiar" title="Copiar">${icone('copiar')}</button>`;
+      <button data-o="nota" title="${t('Adicionar uma nota')}">${icone('nota')}</button>
+      ${grifo ? `<button data-o="apagar" title="${t('Tirar o grifo')}">${icone('lixeira')}</button>` : ''}
+      <button data-o="copiar" title="${t('Copiar')}">${icone('copiar')}</button>`;
     document.body.appendChild(b);
     const topo = retangulo.top - b.offsetHeight - 10;
     b.style.top = (topo < 90 ? retangulo.bottom + 10 : topo) + 'px';
@@ -160,7 +160,7 @@ const Marcas = (() => {
           await chamar('remover_grifo', { guid: grifo.guid });
         } else if (alvoBotao.dataset.o === 'copiar') {
           const texto = grifo ? grifo.faixas.map((f) => textoDosTokens(f.bloco, f.inicio, f.fim)).join(' ') : sel.texto;
-          try { await navigator.clipboard.writeText(texto); aviso('Copiado.'); } catch (_) { aviso('Não deu para copiar.'); }
+          try { await navigator.clipboard.writeText(texto); aviso(t('Copiado.')); } catch (_) { aviso(t('Não deu para copiar.')); }
         } else if (alvoBotao.dataset.o === 'nota') {
           const faixas = grifo ? grifo.faixas : sel.faixas;
           await novaNota(faixas[0].bloco, grifo ? grifo.guid : null);
@@ -208,12 +208,12 @@ const Marcas = (() => {
 
   // ---------------------------------------------------------------- notas no painel
   function cartaoDeNota(n) {
-    const rotulo = n.bloco == null ? 'Nota' : ctx.biblia ? `${ctx.capitulo}:${n.bloco}` : `Parágrafo ${numeroDoParagrafo(n.bloco)}`;
+    const rotulo = n.bloco == null ? t('Nota') : ctx.biblia ? `${ctx.capitulo}:${n.bloco}` : t('Parágrafo {n}', { n: numeroDoParagrafo(n.bloco) });
     return `<div class="nota-cartao cor-${n.cor || 0}" data-guid="${n.guid}">
-      <div class="nota-cab"><span>${esc(rotulo)}</span><button data-o="apagar" title="Excluir a nota">${icone('lixeira')}</button></div>
-      <input class="nota-titulo" placeholder="Título" value="${esc(n.titulo)}">
-      <textarea class="nota-texto" placeholder="Nota" rows="3">${esc(n.texto)}</textarea>
-      <input class="nota-etiquetas" placeholder="+ Adicionar uma etiqueta (separe por vírgula)" value="${esc(n.etiquetas.join(', '))}">
+      <div class="nota-cab"><span>${esc(rotulo)}</span><button data-o="apagar" title="${t('Excluir a nota')}">${icone('lixeira')}</button></div>
+      <input class="nota-titulo" placeholder="${t('Título')}" value="${esc(n.titulo)}">
+      <textarea class="nota-texto" placeholder="${t('Nota')}" rows="3">${esc(n.texto)}</textarea>
+      <input class="nota-etiquetas" placeholder="${t('+ Adicionar uma etiqueta (separe por vírgula)')}" value="${esc(n.etiquetas.join(', '))}">
     </div>`;
   }
   function numeroDoParagrafo(pid) {
@@ -224,7 +224,7 @@ const Marcas = (() => {
     const lugar = ctx.c.querySelector('.minhas-notas');
     if (!lugar) return;
     const notas = ctx.dados.notas;
-    lugar.innerHTML = notas.length ? `<div class="paragrafo">Minhas notas</div>${notas.map(cartaoDeNota).join('')}` : '';
+    lugar.innerHTML = notas.length ? `<div class="paragrafo">${t('Minhas notas')}</div>${notas.map(cartaoDeNota).join('')}` : '';
     lugar.querySelectorAll('.nota-cartao').forEach((cartao) => {
       const guid = cartao.dataset.guid;
       const nota = notas.find((n) => n.guid === guid);
@@ -238,7 +238,7 @@ const Marcas = (() => {
       };
       cartao.querySelectorAll('input, textarea').forEach((x) => (x.oninput = salvar));
       cartao.querySelector('[data-o="apagar"]').onclick = () => {
-        dialogo('Excluir nota', '<p>Isso não poderá ser desfeito.</p>', [['Cancelar', null], ['Excluir', async () => { await chamar('apagar_nota', { guid }); await recarregar(); }]]);
+        dialogo(t('Excluir nota'), `<p>${t('Isso não poderá ser desfeito.')}</p>`, [[t('Cancelar'), null], [t('Excluir'), async () => { await chamar('apagar_nota', { guid }); await recarregar(); }]]);
       };
     });
   }
@@ -270,10 +270,10 @@ const Marcas = (() => {
     const porVaga = Object.fromEntries(lista.map((m) => [m.slot, m]));
     const corpo = `<div class="fitas">${Array.from({ length: 10 }, (_, i) => {
       const m = porVaga[i];
-      return `<div class="fita fita-${i}"><button class="fita-ir" data-vaga="${i}">${m ? `<b>${esc(m.titulo)}</b><small>${esc(m.trecho)}</small>` : '<span class="nao-usado">Não usado — clique para marcar aqui</span>'}</button>
-        ${m ? `<button class="fita-x" data-tirar="${i}" title="Tirar o marcador">×</button>` : ''}</div>`;
+      return `<div class="fita fita-${i}"><button class="fita-ir" data-vaga="${i}">${m ? `<b>${esc(m.titulo)}</b><small>${esc(m.trecho)}</small>` : `<span class="nao-usado">${t('Não usado — clique para marcar aqui')}</span>`}</button>
+        ${m ? `<button class="fita-x" data-tirar="${i}" title="${t('Tirar o marcador')}">×</button>` : ''}</div>`;
     }).join('')}</div>`;
-    const f = dialogo('Marcadores', corpo, [['Concluído', null]]);
+    const f = dialogo(t('Marcadores'), corpo, [[t('Concluído'), null]]);
     f.querySelectorAll('[data-vaga]').forEach((b) => (b.onclick = async () => {
       const m = porVaga[+b.dataset.vaga];
       f.remove();
@@ -281,7 +281,7 @@ const Marcas = (() => {
       const bloco = primeiroBlocoVisivel();
       const trecho = bloco != null ? textoDosTokens(bloco, 0, 14) : '';
       await chamar('marcar', { alvo: ctx.alvo, slot: +b.dataset.vaga, bloco, trecho });
-      aviso('Marcador colocado.');
+      aviso(t('Marcador colocado.'));
     }));
     f.querySelectorAll('[data-tirar]').forEach((b) => (b.onclick = async (e) => {
       e.stopPropagation();
@@ -302,7 +302,7 @@ const Marcas = (() => {
     if (m.livro) return abrir({ tela: 'capitulo', livro: m.livro, capitulo: m.capitulo, verso: m.bloco });
     const achado = m.meps ? await chamar('achar_meps', { meps: m.meps }) : null;
     if (achado) abrir({ tela: 'documento', pasta: achado[0], id: achado[1], bloco: m.bloco });
-    else aviso('Essa publicação não está na sua biblioteca.');
+    else aviso(t('Essa publicação não está na sua biblioteca.'));
   }
 
   // ---------------------------------------------------------------- montar

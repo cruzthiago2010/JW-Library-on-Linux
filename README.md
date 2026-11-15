@@ -28,7 +28,11 @@ from another device).
 
 Community project with **no official connection** to the organization. The app ships no
 publications and no JW Library CSS: publications are styled by its own CSS (`ui/estilo/`).
-The interface is currently in Brazilian Portuguese; it opens publications in any language.
+The interface is in **English** or **Brazilian Portuguese** (chosen on first launch and in Settings); it opens publications in any language.
+
+| | |
+|---|---|
+| ![Language choice on first launch](docs/screenshots/idioma.jpg) | ![Bible books in English](docs/screenshots/en-biblia.jpg) |
 
 ### Features
 
@@ -48,8 +52,8 @@ The interface is currently in Brazilian Portuguese; it opens publications in any
 
 Download from the [Releases](../../releases/latest) page:
 
-- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.2_amd64.deb`
-- Other distributions: make `JW_Library_on_Linux-0.1.2-x86_64.AppImage` executable and run it.
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.2.0_amd64.deb`
+- Other distributions: make `JW_Library_on_Linux-0.2.0-x86_64.AppImage` executable and run it.
 
 📖 **[Where to put your .jwpub files and how to import them](docs/PUBLICACOES.md#english)**
 
@@ -87,6 +91,8 @@ de outro aparelho).
 
 Projeto da comunidade, **sem ligação oficial** com a organização. O app não traz publicações nem o
 CSS do JW Library: o visual das publicações vem de um CSS próprio (`ui/estilo/`).
+A interface fica em **português** ou **inglês**: o idioma é escolhido na primeira abertura e pode
+ser trocado em Configurações. As publicações abrem em qualquer idioma.
 
 ### O que faz
 
@@ -104,8 +110,8 @@ CSS do JW Library: o visual das publicações vem de um CSS próprio (`ui/estilo
 
 ### Instalar
 
-- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.2_amd64.deb`
-- Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.1.2-x86_64.AppImage` e abra.
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.2.0_amd64.deb`
+- Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.2.0-x86_64.AppImage` e abra.
 
 📖 **[Onde ficam os arquivos .jwpub e como importar](docs/PUBLICACOES.md#português)**
 

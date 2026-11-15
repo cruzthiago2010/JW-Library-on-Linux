@@ -37,6 +37,25 @@ pub const NOMES: [&str; 66] = [
     "1 Pedro", "2 Pedro", "1 João", "2 João", "3 João", "Judas", "Apocalipse",
 ];
 
+/// Os nomes em inglês, na ordem de `NOMES`.
+pub const NOMES_EN: [&str; 66] = [
+    "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth",
+    "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra",
+    "Nehemiah", "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon",
+    "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos",
+    "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah",
+    "Malachi", "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians",
+    "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians",
+    "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James",
+    "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation",
+];
+
+/// O nome do livro (1 a 66) no idioma da interface.
+pub fn nome(livro: u32) -> &'static str {
+    let lista = if crate::idioma::ingles() { &NOMES_EN } else { &NOMES };
+    lista.get((livro as usize).wrapping_sub(1)).copied().unwrap_or("?")
+}
+
 fn tom(numero: u32) -> &'static str {
     match numero {
         1..=5 => "escuro",
@@ -92,8 +111,7 @@ pub fn faixa(texto: &str) -> Option<(u32, u32)> {
 pub fn rotulo(inicio: u32, fim: u32) -> String {
     let (b1, c1, v1) = do_codigo(inicio);
     let (b2, c2, v2) = do_codigo(fim);
-    let nome = |b: u32| NOMES.get(b as usize - 1).copied().unwrap_or("?");
-    let nome1 = if b1 == 19 && c1 == c2 && b1 == b2 { "Salmo" } else { nome(b1) };
+    let nome1 = if b1 == 19 && c1 == c2 && b1 == b2 { crate::idioma::t("Salmo", "Psalm") } else { nome(b1) };
     if b1 != b2 {
         format!("{} {c1}:{v1}–{} {c2}:{v2}", nome(b1), nome(b2))
     } else if c1 != c2 {
@@ -134,7 +152,7 @@ impl Biblia {
                 Livro {
                     numero,
                     sigla: SIGLAS[numero as usize - 1],
-                    nome: NOMES[numero as usize - 1],
+                    nome: nome(numero),
                     capitulos: total,
                     tom: tom(numero),
                     url: if total == 1 { format!("/biblia/{numero}/1") } else { format!("/biblia/{numero}") },
@@ -154,7 +172,7 @@ impl Biblia {
             )
             .optional()
             .map_err(|e| e.to_string())?
-            .ok_or_else(|| format!("{} {capitulo} não está na Bíblia do aparelho", NOMES.get(livro as usize - 1).unwrap_or(&"?")))?;
+            .ok_or_else(|| format!("{} {capitulo} não está na Bíblia do aparelho", nome(livro)))?;
         self.publicacao.claro(&bruto)
     }
 
