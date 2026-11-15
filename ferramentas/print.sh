@@ -4,7 +4,7 @@
 export DISPLAY=:77
 pgrep -x Xvfb >/dev/null || { setsid -f Xvfb :77 -screen 0 1456x900x24 -nolisten tcp >/dev/null 2>&1; sleep 1; }
 SAIDA="$1"; shift
-B="${CARGO_TARGET_DIR:-$(dirname "$0")/../target}/debug/leitor-jw"
+B="${LEITOR_BIN:-${CARGO_TARGET_DIR:-$(dirname "$0")/../target}/debug/leitor-jw}"
 pkill -x leitor-jw; sleep 1
 setsid -f "$B" > "$SAIDA/app.log" 2>&1
 for i in $(seq 20); do W=$(xdotool search --name "^JW Library on Linux$" | tail -1); [ -n "$W" ] && break; sleep 0.5; done
