@@ -76,6 +76,12 @@ async fn importar(app: tauri::AppHandle, caminhos: Vec<String>) -> Result<Import
     .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn remover_publicacao(app: tauri::AppHandle, pasta: String) -> Result<(), String> {
+    let raiz = raiz(&app);
+    tauri::async_runtime::spawn_blocking(move || jwpub::remover(&raiz, &pasta)).await.map_err(|e| e.to_string())?
+}
+
 fn nome(c: &Path) -> String {
     c.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
 }
@@ -501,7 +507,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar, definir_idioma, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
+            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

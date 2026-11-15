@@ -211,6 +211,24 @@ async function ouvirArrastar() {
   });
 }
 
+function removerPublicacao(pasta, titulo) {
+  dialogo(t('Remover da biblioteca'), `<p>${t('"{x}" sai da biblioteca deste computador. Seus grifos e notas continuam guardados e voltam se você importar a publicação de novo.', { x: esc(titulo) })}</p>`,
+    [[t('Cancelar'), null], [t('Remover'), async () => {
+      try {
+        await chamar('remover_publicacao', { pasta });
+        await carregarBiblioteca();
+        // Some de todas as pilhas o que era desta publicação.
+        for (const k of Object.keys(pilhas)) {
+          const p = pilhas[k].filter((x) => x.pasta !== pasta);
+          pilhas[k] = p.length ? p : [{ tela: k }];
+        }
+        guardar('historico', ler('historico', []).filter((x) => x.pasta !== pasta));
+        aviso(t('Publicação removida.'));
+        desenhar();
+      } catch (erro) { aviso(t('Não deu para remover: {x}', { x: erro }), 8000); }
+    }]]);
+}
+
 async function carregarBiblioteca() {
   biblioteca = await chamar('listar');
   base = biblioteca.base;
@@ -606,7 +624,7 @@ const TELAS = {
 
   async sumario(c, e) {
     const s = await chamar('sumario', { pasta: e.pasta });
-    barra(s.titulo, Idioma.nome);
+    barra(s.titulo, Idioma.nome, [['lixeira', t('Remover da biblioteca'), () => removerPublicacao(s.pasta, s.titulo)]]);
     const img = (m) => (m ? `<img src="${base}/midia/${encodeURIComponent(s.pasta)}/${encodeURIComponent(m)}" alt="" loading="lazy">` : '');
     const itens = (lista) => lista.map((i) => {
       if (!i.documento && i.filhos.length) return `<div class="item secao">${esc(i.titulo)}</div>${itens(i.filhos)}`;

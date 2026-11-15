@@ -119,6 +119,12 @@ const EN = {
   '{n} ocorrências': '{n} results',
   ' (mostrando {n})': ' (showing {n})',
   // Biblioteca
+  'Remover da biblioteca': 'Remove from library',
+  'Remover': 'Remove',
+  '"{x}" sai da biblioteca deste computador. Seus grifos e notas continuam guardados e voltam se você importar a publicação de novo.':
+    '"{x}" will be removed from this computer\'s library. Your highlights and notes are kept and come back if you import the publication again.',
+  'Publicação removida.': 'Publication removed.',
+  'Não deu para remover: {x}': "Couldn't remove: {x}",
   'Título': 'Title',
   'Maior arquivo': 'Largest file',
   'Mais recentes': 'Most recent',

@@ -75,6 +75,17 @@ pub fn nome_seguro(nome: &str) -> Option<String> {
     }
 }
 
+/// Tira uma publicação da biblioteca (apaga a pasta dela). Só aceita o nome de
+/// uma pasta que está mesmo em `raiz` e tem o banco de uma publicação.
+pub fn remover(raiz: &Path, pasta: &str) -> Resultado<()> {
+    let nome = nome_seguro(pasta).filter(|n| n == pasta).ok_or("pasta inválida")?;
+    let alvo = raiz.join(&nome);
+    if !alvo.join(BANCO).is_file() {
+        return Err(format!("{nome}: não é uma publicação instalada"));
+    }
+    fs::remove_dir_all(&alvo).map_err(erro("apagar"))
+}
+
 /// Instala o `.jwpub` em `<raiz>/<nome sem extensão>/`. Não repete se o
 /// tamanho do arquivo é o mesmo da última vez. Devolve o nome da pasta.
 pub fn instalar(arquivo: &Path, raiz: &Path) -> Resultado<String> {
@@ -406,6 +417,21 @@ pub fn instaladas(raiz: &Path) -> Vec<Publicacao> {
 #[cfg(test)]
 mod testes {
     use super::*;
+
+    #[test]
+    fn remover_so_apaga_publicacao_da_raiz() {
+        let raiz = std::env::temp_dir().join(format!("leitor-remover-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&raiz);
+        fs::create_dir_all(raiz.join("w_T_202601/midia")).unwrap();
+        fs::write(raiz.join("w_T_202601").join(BANCO), b"x").unwrap();
+        fs::create_dir_all(raiz.join("outra")).unwrap();
+        assert!(remover(&raiz, "../etc").is_err());
+        assert!(remover(&raiz, "outra").is_err());
+        assert!(raiz.join("outra").exists());
+        remover(&raiz, "w_T_202601").unwrap();
+        assert!(!raiz.join("w_T_202601").exists());
+        let _ = fs::remove_dir_all(&raiz);
+    }
 
     #[test]
     fn chave_igual_a_do_servidor() {
