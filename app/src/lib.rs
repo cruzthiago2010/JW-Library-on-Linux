@@ -62,7 +62,7 @@ async fn importar(app: tauri::AppHandle, caminhos: Vec<String>) -> Result<Import
         for c in caminhos {
             let caminho = Path::new(&c);
             if caminho.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("jwpub")) != Some(true) {
-                saida.erros.push(format!("{}: não é um arquivo .jwpub", nome(caminho)));
+                saida.erros.push(format!("{}: {}", nome(caminho), leitor_nucleo::idioma::t("não é um arquivo .jwpub", "not a .jwpub file")));
                 continue;
             }
             match jwpub::instalar(caminho, &raiz) {
@@ -280,7 +280,7 @@ async fn referencias(app: tauri::AppHandle, livro: u32, capitulo: u32, mid: i64)
 async fn texto_biblico(app: tauri::AppHandle, link: String) -> Result<biblia::Referencia, String> {
     let raiz = raiz(&app);
     tauri::async_runtime::spawn_blocking(move || {
-        let (a, b) = biblia::faixa_do_link(&link).or_else(|| biblia::faixa(&link)).ok_or("referência inválida")?;
+        let (a, b) = biblia::faixa_do_link(&link).or_else(|| biblia::faixa(&link)).ok_or(leitor_nucleo::idioma::t("referência inválida", "invalid reference"))?;
         achar_biblia(&raiz)?.referencia(a, b)
     })
     .await
@@ -371,7 +371,7 @@ fn notas(app: tauri::AppHandle, filtro: String, etiqueta: Option<String>) -> Res
                 let titulo = p.documento(id).map(|d| d.titulo).unwrap_or_default();
                 n.origem = format!("{titulo} — {}", p.titulo);
             } else if n.origem.is_empty() {
-                n.origem = format!("{} (não instalada)", n.simbolo);
+                n.origem = format!("{} ({})", n.simbolo, leitor_nucleo::idioma::t("não instalada", "not installed"));
             }
         }
     }
@@ -442,7 +442,7 @@ fn restaurar_backup(app: tauri::AppHandle) -> Result<backup::Resumo, String> {
     let estado = app.state::<Estado>();
     let novo = estado.dados.join("userData.restaurar.db");
     if !novo.exists() {
-        return Err("confira o backup antes de restaurar".into());
+        return Err(leitor_nucleo::idioma::t("confira o backup antes de restaurar", "check the backup before restoring").into());
     }
     let atual = estado.dados.join("userData.db");
     let mut p = estado.pessoal.lock().map_err(|e| e.to_string())?;

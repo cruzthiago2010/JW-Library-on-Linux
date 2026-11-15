@@ -78,10 +78,10 @@ pub fn nome_seguro(nome: &str) -> Option<String> {
 /// Tira uma publicação da biblioteca (apaga a pasta dela). Só aceita o nome de
 /// uma pasta que está mesmo em `raiz` e tem o banco de uma publicação.
 pub fn remover(raiz: &Path, pasta: &str) -> Resultado<()> {
-    let nome = nome_seguro(pasta).filter(|n| n == pasta).ok_or("pasta inválida")?;
+    let nome = nome_seguro(pasta).filter(|n| n == pasta).ok_or(crate::idioma::t("pasta inválida", "invalid folder"))?;
     let alvo = raiz.join(&nome);
     if !alvo.join(BANCO).is_file() {
-        return Err(format!("{nome}: não é uma publicação instalada"));
+        return Err(format!("{nome}: {}", crate::idioma::t("não é uma publicação instalada", "not an installed publication")));
     }
     fs::remove_dir_all(&alvo).map_err(erro("apagar"))
 }
@@ -93,7 +93,7 @@ pub fn instalar(arquivo: &Path, raiz: &Path) -> Resultado<String> {
         .file_stem()
         .and_then(|s| s.to_str())
         .and_then(nome_seguro)
-        .ok_or("nome de arquivo inválido")?;
+        .ok_or(crate::idioma::t("nome de arquivo inválido", "invalid file name"))?;
     let pasta = raiz.join(&nome);
     let marca = pasta.join("instalado.json");
     let tamanho = fs::metadata(arquivo).map_err(erro("ler"))?.len();
@@ -146,7 +146,7 @@ pub fn instalar(arquivo: &Path, raiz: &Path) -> Resultado<String> {
         }
     }
     if !achou {
-        return Err(format!("{nome}: sem banco de dados"));
+        return Err(format!("{nome}: {}", crate::idioma::t("sem banco de dados (não parece um .jwpub)", "no database (does not look like a .jwpub)")));
     }
     fs::write(&marca, serde_json::json!({ "tamanho": tamanho }).to_string())
         .map_err(erro("gravar marca"))?;
@@ -253,7 +253,7 @@ impl Publicacao {
     fn conectar(dir: &Path) -> Resultado<Connection> {
         let banco = dir.join(BANCO);
         if !banco.exists() {
-            return Err("publicação não instalada".into());
+            return Err(crate::idioma::t("publicação não instalada", "publication not installed").into());
         }
         Connection::open_with_flags(&banco, OpenFlags::SQLITE_OPEN_READ_ONLY)
             .map_err(erro("abrir banco"))

@@ -52,48 +52,48 @@ pub fn resumo(banco: &Path) -> Resultado<Resumo> {
 /// Confere o `.jwlibrary` e grava o `userData.db` dele em `saida`. Não toca no banco atual.
 pub fn extrair(arquivo: &Path, saida: &Path) -> Resultado<Resumo> {
     let f = fs::File::open(arquivo).map_err(|e| e.to_string())?;
-    let mut zip = zip::ZipArchive::new(f).map_err(|_| "não é um arquivo .jwlibrary (ZIP)".to_string())?;
+    let mut zip = zip::ZipArchive::new(f).map_err(|_| crate::idioma::t("não é um arquivo .jwlibrary (ZIP)", "not a .jwlibrary file (ZIP)").to_string())?;
     let mut total = 0u64;
     for i in 0..zip.len() {
-        let e = zip.by_index(i).map_err(|_| "o arquivo está corrompido".to_string())?;
+        let e = zip.by_index(i).map_err(|_| crate::idioma::t("o arquivo está corrompido", "the file is corrupted").to_string())?;
         let nome = e.name().to_string();
         if nome.contains('/') || nome.contains('\\') || nome.starts_with('.') {
-            return Err(format!("o arquivo tem algo que não é de backup do JW Library: {nome}"));
+            return Err(format!("{}: {nome}", crate::idioma::t("o arquivo tem algo que não é de backup do JW Library", "the file contains something that is not part of a JW Library backup")));
         }
         total += e.size();
     }
     if total > LIMITE {
-        return Err("o conteúdo do backup é grande demais".into());
+        return Err(crate::idioma::t("o conteúdo do backup é grande demais", "the backup content is too large").into());
     }
     let mut manifesto = String::new();
     zip.by_name(MANIFESTO)
-        .map_err(|_| "falta o manifest.json no arquivo".to_string())?
+        .map_err(|_| crate::idioma::t("falta o manifest.json no arquivo", "manifest.json is missing from the file").to_string())?
         .take(1024 * 1024)
         .read_to_string(&mut manifesto)
-        .map_err(|_| "o manifest.json não é válido".to_string())?;
-    let manifesto: serde_json::Value = serde_json::from_str(&manifesto).map_err(|_| "o manifest.json não é válido".to_string())?;
-    let bloco = manifesto.get("userDataBackup").filter(|v| v.is_object()).ok_or("o arquivo não é um backup do JW Library")?;
+        .map_err(|_| crate::idioma::t("o manifest.json não é válido", "manifest.json is not valid").to_string())?;
+    let manifesto: serde_json::Value = serde_json::from_str(&manifesto).map_err(|_| crate::idioma::t("o manifest.json não é válido", "manifest.json is not valid").to_string())?;
+    let bloco = manifesto.get("userDataBackup").filter(|v| v.is_object()).ok_or(crate::idioma::t("o arquivo não é um backup do JW Library", "the file is not a JW Library backup"))?;
     let mut dados = vec![];
-    zip.by_name(BANCO).map_err(|_| "falta o userData.db no arquivo".to_string())?.read_to_end(&mut dados).map_err(|_| "o arquivo está corrompido".to_string())?;
+    zip.by_name(BANCO).map_err(|_| crate::idioma::t("falta o userData.db no arquivo", "userData.db is missing from the file").to_string())?.read_to_end(&mut dados).map_err(|_| crate::idioma::t("o arquivo está corrompido", "the file is corrupted").to_string())?;
     if let Some(h) = bloco.get("hash").and_then(|v| v.as_str()).filter(|h| !h.is_empty()) {
         if h != sha256_hex(&dados) {
-            return Err("o userData.db não confere com o manifest (arquivo danificado)".into());
+            return Err(crate::idioma::t("o userData.db não confere com o manifest (arquivo danificado)", "userData.db does not match the manifest (damaged file)").into());
         }
     }
     if !dados.starts_with(b"SQLite format 3\0") {
-        return Err("o userData.db não é um banco do JW Library".into());
+        return Err(crate::idioma::t("o userData.db não é um banco do JW Library", "userData.db is not a JW Library database").into());
     }
     fs::write(saida, &dados).map_err(|e| e.to_string())?;
     let conferir = || -> Resultado<()> {
         let c = Connection::open_with_flags(saida, OpenFlags::SQLITE_OPEN_READ_ONLY).map_err(|_| "o userData.db está corrompido".to_string())?;
         let ok: String = c.query_row("PRAGMA quick_check", [], |r| r.get(0)).map_err(|_| "o userData.db está corrompido".to_string())?;
         if ok != "ok" {
-            return Err("o userData.db está corrompido".into());
+            return Err(crate::idioma::t("o userData.db está corrompido", "userData.db is corrupted").into());
         }
         for t in TABELAS {
             let existe: i64 = c.query_row("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?", [t], |r| r.get(0)).unwrap_or(0);
             if existe == 0 {
-                return Err(format!("o userData.db não tem a tabela {t} do JW Library"));
+                return Err(format!("{} {t}", crate::idioma::t("o userData.db não tem a tabela do JW Library:", "userData.db is missing the JW Library table:")));
             }
         }
         Ok(())

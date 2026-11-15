@@ -172,7 +172,7 @@ impl Biblia {
             )
             .optional()
             .map_err(|e| e.to_string())?
-            .ok_or_else(|| format!("{} {capitulo} não está na Bíblia do aparelho", nome(livro)))?;
+            .ok_or_else(|| format!("{} {capitulo}: {}", nome(livro), crate::idioma::t("não está na Bíblia instalada", "not in the installed Bible")))?;
         self.publicacao.claro(&bruto)
     }
 
@@ -271,7 +271,7 @@ impl Biblia {
             }
         }
         if saida.is_empty() {
-            return Err(format!("{} não está na Bíblia do aparelho", rotulo(inicio, fim)));
+            return Err(format!("{}: {}", rotulo(inicio, fim), crate::idioma::t("não está na Bíblia instalada", "not in the installed Bible")));
         }
         Ok(saida)
     }
