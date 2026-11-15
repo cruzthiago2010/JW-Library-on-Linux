@@ -335,3 +335,12 @@ body.soltando #soltar { display: grid; }
 .escolha-idioma .botao { background: #fff; color: #3b2f63; font-size: 17px; padding: 12px 26px; min-width: 200px; }
 .escolha-idioma .botao:hover { background: #ece8f8; }
 .escolha-idioma small { opacity: .65; font-size: 13px; }
+
+/* "..." dos cartões de publicação (aparece ao passar o mouse, como no JW Library). */
+.cartao { position: relative; }
+.cartao .mais-cartao { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: var(--texto-suave); opacity: 0; }
+.cartao:hover .mais-cartao, .cartao:focus-within .mais-cartao { opacity: 1; }
+.cartao .mais-cartao:hover { background: var(--borda); color: var(--texto); }
+.cartao .mais-cartao svg { width: 18px; height: 18px; }
+@media (hover: none) { .cartao .mais-cartao { opacity: 1; } }
+.cartao > div { padding-right: 22px; }

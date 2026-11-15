@@ -212,9 +212,21 @@ async function ouvirArrastar() {
   });
 }
 
-function removerPublicacao(pasta, titulo) {
-  dialogo(t('Remover da biblioteca'), `<p>${t('"{x}" sai da biblioteca deste computador. Seus grifos e notas continuam guardados e voltam se você importar a publicação de novo.', { x: esc(titulo) })}</p>`,
-    [[t('Cancelar'), null], [t('Remover'), async () => {
+// O "..." de uma publicação, como no JW Library: Abrir e Excluir.
+function menuDaPublicacao(ancora, pasta) {
+  const c = biblioteca.cartoes.find((x) => x.pasta === pasta);
+  const m = menu(ancora, `<button data-o="abrir">${t('Abrir')}</button><button data-o="excluir">${t('Excluir')}</button>`);
+  m.onclick = (ev) => {
+    const o = ev.target.closest('[data-o]')?.dataset.o;
+    fecharMenu();
+    if (o === 'abrir') abrir({ tela: 'sumario', pasta });
+    if (o === 'excluir') removerPublicacao(pasta, c ? c.titulo : pasta, c ? c.tamanho : 0);
+  };
+}
+
+function removerPublicacao(pasta, titulo, tamanho = 0) {
+  dialogo(t('Excluir publicação'), `<p>${t('Excluir "{x}" deste computador?', { x: esc(titulo) })}${tamanho ? ` (${megas(tamanho)})` : ''}</p><p>${t('Seus grifos e notas continuam guardados e voltam se você importar a publicação de novo.')}</p>`,
+    [[t('Cancelar'), null], [t('Excluir'), async () => {
       try {
         await chamar('remover_publicacao', { pasta });
         await carregarBiblioteca();
@@ -224,9 +236,9 @@ function removerPublicacao(pasta, titulo) {
           pilhas[k] = p.length ? p : [{ tela: k }];
         }
         guardar('historico', ler('historico', []).filter((x) => x.pasta !== pasta));
-        aviso(t('Publicação removida.'));
+        aviso(t('Publicação excluída.'));
         desenhar();
-      } catch (erro) { aviso(t('Não deu para remover: {x}', { x: erro }), 8000); }
+      } catch (erro) { aviso(t('Não deu para excluir: {x}', { x: erro }), 8000); }
     }]]);
 }
 
@@ -240,10 +252,15 @@ const ICONE_CATEGORIA = { biblia: 'biblia', livros: 'livro', brochuras: 'brochur
 
 function cartao(c, extra = '') {
   const img = c.capa ? `<img src="${capa(c)}" alt="" loading="lazy">` : '<div class="semcapa"></div>';
-  return `<button class="cartao" data-pasta="${esc(c.pasta)}">${img}<div><div class="t">${esc(c.titulo)}</div><div class="m">${extra || c.ano}</div></div></button>`;
+  return `<button class="cartao" data-pasta="${esc(c.pasta)}">${img}<div><div class="t">${esc(c.titulo)}</div><div class="m">${extra || c.ano}</div></div><span class="mais-cartao" role="button" title="${t('Mais opções')}" data-mais="${esc(c.pasta)}">${icone('mais')}</span></button>`;
 }
 function ligarCartoes(raiz) {
-  raiz.querySelectorAll('.cartao[data-pasta]').forEach((b) => (b.onclick = () => abrir({ tela: 'sumario', pasta: b.dataset.pasta })));
+  raiz.querySelectorAll('.cartao[data-pasta]').forEach((b) => (b.onclick = (ev) => {
+    const mais = ev.target.closest('[data-mais]');
+    if (!mais) return abrir({ tela: 'sumario', pasta: b.dataset.pasta });
+    ev.stopPropagation();
+    menuDaPublicacao(mais, b.dataset.pasta);
+  }));
 }
 
 // ---------- Painel de estudo ----------
@@ -653,7 +670,7 @@ const TELAS = {
 
   async sumario(c, e) {
     const s = await chamar('sumario', { pasta: e.pasta });
-    barra(s.titulo, Idioma.nome, [['lixeira', t('Remover da biblioteca'), () => removerPublicacao(s.pasta, s.titulo)]]);
+    barra(s.titulo, Idioma.nome, [['mais', t('Mais opções'), (ev, b) => menuDaPublicacao(b, s.pasta)]]);
     const img = (m) => (m ? `<img src="${base}/midia/${encodeURIComponent(s.pasta)}/${encodeURIComponent(m)}" alt="" loading="lazy">` : '');
     const itens = (lista) => lista.map((i) => {
       if (!i.documento && i.filhos.length) return `<div class="item secao">${esc(i.titulo)}</div>${itens(i.filhos)}`;
