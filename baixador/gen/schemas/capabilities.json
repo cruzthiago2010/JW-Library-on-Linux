@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Janela do baixador: só o básico do Tauri (comandos e eventos).","local":true,"windows":["main"],"permissions":["core:default"]}}
