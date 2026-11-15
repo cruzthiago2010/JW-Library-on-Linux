@@ -2,7 +2,7 @@
 // (como no JW Library do Windows: voltar à seção devolve onde se parou; a seta ← sobe um nível).
 const tauri = window.__TAURI__;
 const chamar = (cmd, args) => tauri.core.invoke(cmd, args);
-const VERSAO = '0.2';
+const VERSAO = '0.3';
 
 const SECOES = [
   ['inicio', 'Início', 'inicio'],
@@ -15,6 +15,7 @@ const pilhas = Object.fromEntries(SECOES.map(([s]) => [s, [{ tela: s }]]));
 let secao = 'inicio';
 let base = '';
 let biblioteca = { categorias: [], cartoes: [] };
+let temBaixador = false;
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -373,6 +374,18 @@ function menuDoLeitor(b) {
     if (o === 'tela') { fecharMenu(); const j = tauri.window.getCurrentWindow(); j.setFullscreen(!(await j.isFullscreen())); }
   };
 }
+// Rola até o primeiro parágrafo que tem as palavras buscadas e pisca nele.
+function irAoTermo(c, termos) {
+  const tirar = (x) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const palavras = tirar(termos).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  if (!palavras.length) return;
+  const achado = [...c.querySelectorAll('.documento [data-pid]')].find((p) => { const x = tirar(p.textContent); return palavras.every((w) => x.includes(w)); });
+  if (!achado) return;
+  achado.scrollIntoView({ block: 'center' });
+  achado.classList.add('realce-v');
+  setTimeout(() => achado.classList.remove('realce-v'), 2500);
+}
+
 function guardarHistorico(item) {
   const igual = (x) => x.tela === item.tela && x.pasta === item.pasta && x.id === item.id && x.livro === item.livro && x.capitulo === item.capitulo;
   const h = ler('historico', []).filter((x) => !igual(x));
@@ -425,7 +438,7 @@ const TELAS = {
   },
 
   inicio(c) {
-    barra(t('Início'), Idioma.nome, [['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico], ['config', t('Configurações'), configuracoes]]);
+    barra(t('Início'), Idioma.nome, [['buscar', t('Buscar nas publicações'), () => abrir({ tela: 'busca', onde: 'publicacoes' })], ['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico], ['config', t('Configurações'), configuracoes]]);
     const lidos = ler('historico', []).slice(0, 8);
     const recentes = biblioteca.cartoes.slice().sort((a, b) => b.ano - a.ano || b.edicao - a.edicao).slice(0, 6);
     c.innerHTML = `<div class="tela">
@@ -543,10 +556,18 @@ const TELAS = {
   },
 
   busca(c, e) {
-    barra(t('Buscar na Bíblia'), Idioma.nome);
-    c.innerHTML = `<div class="tela"><form class="campo-busca"><input type="search" placeholder="${t('Palavras ou expressão')}" value="${esc(e.termos || '')}" autofocus>
+    const onde = e.onde || 'biblia';
+    barra(t(onde === 'biblia' ? 'Buscar na Bíblia' : 'Buscar nas publicações'), Idioma.nome);
+    c.innerHTML = `<div class="tela"><div class="abas">${[['biblia', 'BÍBLIA'], ['publicacoes', 'PUBLICAÇÕES']].map(([k, n]) =>
+      `<button data-onde="${k}" class="${k === onde ? 'ativa' : ''}">${t(n)}</button>`).join('')}</div>
+      <form class="campo-busca"><input type="search" placeholder="${t('Palavras ou expressão')}" value="${esc(e.termos || '')}" autofocus>
       <label><input type="checkbox"${e.exata ? ' checked' : ''}> ${t('Achar a expressão exata')}</label><button class="botao">${t('Buscar')}</button></form>
       <div class="resultado"></div></div>`;
+    c.querySelectorAll('[data-onde]').forEach((x) => (x.onclick = () => {
+      e.onde = x.dataset.onde;
+      e.termos = c.querySelector('input[type=search]').value.trim();
+      desenhar();
+    }));
     const form = c.querySelector('form');
     const campo = form.querySelector('input[type=search]');
     const exata = form.querySelector('input[type=checkbox]');
@@ -557,13 +578,21 @@ const TELAS = {
       if (!e.termos) { r.innerHTML = ''; return; }
       r.innerHTML = `<p class="vazio">${t('Buscando… (a primeira busca prepara o índice e demora alguns segundos)')}</p>`;
       try {
-        const b = await chamar('buscar_biblia', { termos: e.termos, exata: e.exata });
-        r.innerHTML = `<div class="contador">${t(b.total === 1 ? '{n} ocorrência' : '{n} ocorrências', { n: b.total })}${b.total > b.achados.length ? t(' (mostrando {n})', { n: b.achados.length }) : ''}</div>
-          <div class="lista">${b.achados.map((x) => `<button class="item achado" data-codigo="${x.codigo}"><div><div class="t">${esc(x.rotulo)}</div><div class="m">${x.trecho}</div></div></button>`).join('')}</div>`;
-        r.querySelectorAll('[data-codigo]').forEach((x) => (x.onclick = () => {
-          const k = +x.dataset.codigo;
-          abrir({ tela: 'capitulo', livro: Math.floor(k / 1e6), capitulo: Math.floor(k / 1000) % 1000, verso: k % 1000 });
-        }));
+        const b = await chamar(onde === 'biblia' ? 'buscar_biblia' : 'buscar_publicacoes', { termos: e.termos, exata: e.exata });
+        const contador = `<div class="contador">${t(b.total === 1 ? '{n} ocorrência' : '{n} ocorrências', { n: b.total })}${b.total > b.achados.length ? t(' (mostrando {n})', { n: b.achados.length }) : ''}</div>`;
+        if (onde === 'biblia') {
+          r.innerHTML = contador + `<div class="lista">${b.achados.map((x) => `<button class="item achado" data-codigo="${x.codigo}"><div><div class="t">${esc(x.rotulo)}</div><div class="m">${x.trecho}</div></div></button>`).join('')}</div>`;
+          r.querySelectorAll('[data-codigo]').forEach((x) => (x.onclick = () => {
+            const k = +x.dataset.codigo;
+            abrir({ tela: 'capitulo', livro: Math.floor(k / 1e6), capitulo: Math.floor(k / 1000) % 1000, verso: k % 1000 });
+          }));
+        } else {
+          r.innerHTML = contador + `<div class="lista">${b.achados.map((x, i) => `<button class="item achado" data-i="${i}"><div><div class="t">${esc(x.titulo)}</div><div class="m"><small>${esc(x.publicacao)}</small><br>${x.trecho}</div></div></button>`).join('')}</div>`;
+          r.querySelectorAll('[data-i]').forEach((x) => (x.onclick = () => {
+            const a = b.achados[+x.dataset.i];
+            abrir({ tela: 'documento', pasta: a.pasta, id: a.id, procurar: e.termos });
+          }));
+        }
       } catch (erro) { r.innerHTML = `<p class="vazio">${esc(erro)}</p>`; }
     };
     form.onsubmit = (ev) => { ev.preventDefault(); fazer(); };
@@ -574,7 +603,7 @@ const TELAS = {
 
   biblioteca(c, e) {
     const aba = e.aba || 'publicacoes';
-    const acoes = [['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico]];
+    const acoes = [...(temBaixador ? [['nuvem', t('Baixar publicações'), () => chamar('abrir_baixador').catch((x) => aviso(String(x)))]] : []), ['buscar', t('Buscar nas publicações'), () => abrir({ tela: 'busca', onde: 'publicacoes' })], ['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico]];
     if (aba === 'baixados') acoes.unshift(['ordenar', t('Ordenar'), (ev, botao) => {
       const m = menu(botao, ['titulo:Título', 'maior:Maior arquivo', 'recente:Mais recentes'].map((o) => {
         const [k, n] = o.split(':');
@@ -661,6 +690,7 @@ const TELAS = {
     guardarHistorico({ tela: 'documento', pasta: e.pasta, id: e.id, titulo: d.titulo, publicacao: d.publicacao });
     await Marcas.montar(c, { tipo: 'doc', pasta: e.pasta, id: e.id });
     if (e.bloco != null) c.querySelector(`.documento [data-pid="${e.bloco}"]`)?.scrollIntoView({ block: 'center' });
+    else if (e.procurar) irAoTermo(c, e.procurar);
   },
 
   async reunioes(c, e) {
@@ -769,5 +799,15 @@ function escolherIdioma() {
   montarTrilho();
   try { await carregarBiblioteca(); } catch (e) { aviso(t('Erro ao ler a biblioteca: {x}', { x: e })); }
   ouvirArrastar();
+  try { temBaixador = await chamar('tem_baixador'); } catch (_) {}
+  // Ao voltar para a janela (por exemplo, depois de usar o baixador), relê a
+  // biblioteca e redesenha as telas que mostram a lista de publicações.
+  window.addEventListener('focus', async () => {
+    const antes = biblioteca.cartoes.map((x) => x.pasta + x.tamanho).join();
+    try { await carregarBiblioteca(); } catch (_) { return; }
+    if (biblioteca.cartoes.map((x) => x.pasta + x.tamanho).join() === antes) return;
+    const p = pilhas[secao];
+    if (['inicio', 'biblioteca', 'categoria', 'reunioes', 'biblia'].includes(p[p.length - 1].tela)) desenhar();
+  });
   desenhar();
 })();

@@ -35,7 +35,10 @@ fn abrir(caminho: &Path) -> Resultado<Connection> {
     c.execute_batch(
         "CREATE TABLE IF NOT EXISTS Estado(Chave TEXT PRIMARY KEY, Valor TEXT);
          CREATE VIRTUAL TABLE IF NOT EXISTS Versos USING fts5(
-             codigo UNINDEXED, texto, tokenize = 'unicode61 remove_diacritics 2');",
+             codigo UNINDEXED, texto, tokenize = 'unicode61 remove_diacritics 2');
+         CREATE VIRTUAL TABLE IF NOT EXISTS Docs USING fts5(
+             pasta UNINDEXED, id UNINDEXED, publicacao UNINDEXED, titulo, texto,
+             tokenize = 'unicode61 remove_diacritics 2');",
     )
     .map_err(sql)?;
     Ok(c)
@@ -101,6 +104,79 @@ pub fn buscar(biblioteca: &Path, caminho: &Path, termos: &str, exata: bool, limi
         .query_map(params![q, limite as i64], |l| {
             let codigo: u32 = l.get(0)?;
             Ok(Achado { codigo, rotulo: rotulo(codigo, codigo), trecho: l.get(1)? })
+        })
+        .map_err(sql)?;
+    Ok((total as usize, linhas.collect::<Result<_, _>>().map_err(sql)?))
+}
+
+#[derive(serde::Serialize)]
+pub struct AchadoPub {
+    pub pasta: String,
+    pub id: i64,
+    pub titulo: String,
+    pub publicacao: String,
+    pub trecho: String,
+}
+
+/// A "assinatura" das publicações instaladas (menos as Bíblias): muda quando
+/// alguma entra, sai ou é atualizada.
+fn assinatura(biblioteca: &Path) -> (String, Vec<crate::jwpub::Publicacao>) {
+    let pubs: Vec<_> = crate::jwpub::instaladas(biblioteca).into_iter().filter(|p| !p.simbolo.starts_with("nwt")).collect();
+    let texto = pubs
+        .iter()
+        .map(|p| {
+            let marca = std::fs::read_to_string(biblioteca.join(&p.pasta).join("instalado.json")).unwrap_or_default();
+            format!("{}={}", p.pasta, marca.trim())
+        })
+        .collect::<Vec<_>>()
+        .join(";");
+    (texto, pubs)
+}
+
+/// Monta (ou refaz) o índice das publicações. Devolve se refez.
+pub fn preparar_publicacoes(biblioteca: &Path, caminho: &Path) -> Resultado<bool> {
+    let (agora, pubs) = assinatura(biblioteca);
+    let c = abrir(caminho)?;
+    let antes: Option<String> = c.query_row("SELECT Valor FROM Estado WHERE Chave='publicacoes'", [], |l| l.get(0)).ok();
+    if antes.as_deref() == Some(agora.as_str()) {
+        return Ok(false);
+    }
+    c.execute_batch("BEGIN; DELETE FROM Docs;").map_err(sql)?;
+    {
+        let mut inserir = c.prepare("INSERT INTO Docs (pasta, id, publicacao, titulo, texto) VALUES (?, ?, ?, ?, ?)").map_err(sql)?;
+        for p in &pubs {
+            let Ok(ids) = p.documentos() else { continue };
+            for id in ids {
+                let Ok(d) = p.documento(id) else { continue };
+                let texto = texto_puro(&d.html);
+                if texto.is_empty() {
+                    continue;
+                }
+                inserir.execute(params![p.pasta, id, p.titulo, d.titulo, texto]).map_err(sql)?;
+            }
+        }
+    }
+    c.execute("INSERT OR REPLACE INTO Estado (Chave, Valor) VALUES ('publicacoes', ?)", [&agora]).map_err(sql)?;
+    c.execute_batch("COMMIT;").map_err(sql)?;
+    Ok(true)
+}
+
+/// Os artigos e capítulos das publicações (menos a Bíblia) que têm os termos,
+/// os mais relevantes primeiro, e o total.
+pub fn buscar_publicacoes(biblioteca: &Path, caminho: &Path, termos: &str, exata: bool, limite: usize) -> Resultado<(usize, Vec<AchadoPub>)> {
+    preparar_publicacoes(biblioteca, caminho)?;
+    let Some(q) = consulta(termos, exata) else { return Ok((0, vec![])) };
+    let c = abrir(caminho)?;
+    let total: i64 = c.query_row("SELECT count(*) FROM Docs WHERE Docs MATCH ?", [&q], |l| l.get(0)).map_err(sql)?;
+    let mut s = c
+        .prepare(
+            "SELECT pasta, CAST(id AS INTEGER), publicacao, titulo, snippet(Docs, 4, '<b>', '</b>', '…', 24) FROM Docs \
+             WHERE Docs MATCH ? ORDER BY bm25(Docs, 0, 0, 0, 5.0, 1.0) LIMIT ?",
+        )
+        .map_err(sql)?;
+    let linhas = s
+        .query_map(params![q, limite as i64], |l| {
+            Ok(AchadoPub { pasta: l.get(0)?, id: l.get(1)?, publicacao: l.get(2)?, titulo: l.get(3)?, trecho: l.get(4)? })
         })
         .map_err(sql)?;
     Ok((total as usize, linhas.collect::<Result<_, _>>().map_err(sql)?))

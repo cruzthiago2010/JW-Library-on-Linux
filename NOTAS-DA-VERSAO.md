@@ -1,3 +1,16 @@
+# JW Library on Linux 0.3.0
+
+- **Busca nas publicações**: a lupa da Biblioteca e do Início procura em todos os artigos e capítulos importados (a aba Bíblia continua buscando versículos). / **Search publications**: search every imported article and chapter.
+- **Remover publicação**: botão de lixeira na tela da publicação, com confirmação. Grifos e notas ficam guardados. / **Remove a publication** from the library; highlights and notes are kept.
+- **ARM64**: instaladores também para computadores ARM (Raspberry Pi 4/5 com sistema de 64 bits e outros). / Installers for ARM64 too.
+- Mensagens de erro em inglês quando a interface está em inglês. / Error messages follow the interface language.
+- Integração com o baixador de publicações (projeto irmão): o botão "Baixar publicações" aparece quando ele está instalado, e a Biblioteca se atualiza ao voltar para a janela.
+
+## Instalar · Install
+
+- x86_64: `leitor-jw_0.3.0_amd64.deb` ou `JW_Library_on_Linux-0.3.0-x86_64.AppImage`
+- ARM64: `leitor-jw_0.3.0_arm64.deb` ou `JW_Library_on_Linux-0.3.0-aarch64.AppImage`
+
 # JW Library on Linux 0.2.0
 
 - **Interface em inglês e português.** Na primeira abertura o app pergunta o idioma; dá para trocar em Configurações. Os nomes dos livros da Bíblia e das categorias da Biblioteca também mudam.

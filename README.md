@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/cruzthiago2010/JW-Library-on-Linux?label=download&color=5b4a92"></a>
-  <img alt="Linux x86_64" src="https://img.shields.io/badge/Linux-x86__64-2f2552">
+  <img alt="Linux x86_64 · ARM64" src="https://img.shields.io/badge/Linux-x86__64%20%C2%B7%20ARM64-2f2552">
   <img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-6cc456">
 </p>
 
@@ -42,6 +42,7 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
 - **Reader** with a study panel (footnotes, quoted passages, Bible texts), article arrows, text size,
   full screen, light and dark themes.
 - **Bible**: books, chapters, study notes, marginal references, verse menu and search.
+- **Search** across all imported publications, and remove publications from the library.
 - **Meetings**: the workbook and the Watchtower study of the week, with week arrows.
 - **Personal Study**: highlights in 6 colors, notes with tags, bookmarks (10 ribbons), answer fields
   and a "Notes and tags" screen.
@@ -52,12 +53,12 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
 
 Download from the [Releases](../../releases/latest) page:
 
-- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.2.0_amd64.deb`
-- Other distributions: make `JW_Library_on_Linux-0.2.0-x86_64.AppImage` executable and run it.
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.3.0_amd64.deb` (ARM: `_arm64.deb`)
+- Other distributions: make `JW_Library_on_Linux-0.3.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) executable and run it.
 
 📖 **[Where to put your .jwpub files and how to import them](docs/PUBLICACOES.md#english)**
 
-64-bit (x86_64) only. Data lives in `~/.local/share/io.github.leitorjw/` (`biblioteca/` with the
+64-bit only (x86_64 or ARM64). Data lives in `~/.local/share/io.github.leitorjw/` (`biblioteca/` with the
 publications and `userData.db` with highlights and notes, in JW Library's format).
 
 ### Build
@@ -102,6 +103,7 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
 - **Leitor** com painel de estudo (notas de rodapé, trechos citados, textos bíblicos), setas de artigo,
   tamanho do texto, tela inteira, tema claro/escuro.
 - **Bíblia**: livros, capítulos, notas de estudo, referências marginais, menu do versículo e busca.
+- **Busca** em todas as publicações importadas, e remover publicações da biblioteca.
 - **Reuniões**: a apostila e o estudo de A Sentinela da semana, com setas de semana.
 - **Estudo Pessoal**: grifos em 6 cores, notas com etiquetas, marcadores (10 fitas), campos de
   resposta, tela "Notas e etiquetas".
@@ -110,8 +112,8 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
 
 ### Instalar
 
-- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.2.0_amd64.deb`
-- Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.2.0-x86_64.AppImage` e abra.
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.3.0_amd64.deb` (ARM: `_arm64.deb`)
+- Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.3.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) e abra.
 
 📖 **[Onde ficam os arquivos .jwpub e como importar](docs/PUBLICACOES.md#português)**
 

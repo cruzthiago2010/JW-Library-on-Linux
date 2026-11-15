@@ -82,6 +82,25 @@ async fn remover_publicacao(app: tauri::AppHandle, pasta: String) -> Result<(), 
     tauri::async_runtime::spawn_blocking(move || jwpub::remover(&raiz, &pasta)).await.map_err(|e| e.to_string())?
 }
 
+/// O programa do baixador (`jw-baixador`), se estiver no PATH.
+fn baixador() -> Option<PathBuf> {
+    let caminhos = std::env::var_os("PATH")?;
+    std::env::split_paths(&caminhos).map(|d| d.join("jw-baixador")).find(|c| c.is_file())
+}
+
+#[tauri::command]
+fn tem_baixador() -> bool {
+    baixador().is_some()
+}
+
+/// Abre o baixador de publicações (projeto irmão), que instala os .jwpub na
+/// mesma pasta da Biblioteca.
+#[tauri::command]
+fn abrir_baixador() -> Result<(), String> {
+    let programa = baixador().ok_or(leitor_nucleo::idioma::t("o baixador não está instalado", "the downloader is not installed"))?;
+    std::process::Command::new(programa).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
 fn nome(c: &Path) -> String {
     c.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
 }
@@ -291,6 +310,24 @@ async fn texto_biblico(app: tauri::AppHandle, link: String) -> Result<biblia::Re
 struct Busca {
     total: usize,
     achados: Vec<busca::Achado>,
+}
+
+#[derive(serde::Serialize)]
+struct BuscaPub {
+    total: usize,
+    achados: Vec<busca::AchadoPub>,
+}
+
+#[tauri::command]
+async fn buscar_publicacoes(app: tauri::AppHandle, termos: String, exata: bool) -> Result<BuscaPub, String> {
+    let raiz = raiz(&app);
+    let indice = app.state::<Estado>().dados.join("busca.db");
+    tauri::async_runtime::spawn_blocking(move || {
+        let (total, achados) = busca::buscar_publicacoes(&raiz, &indice, &termos, exata, 200)?;
+        Ok(BuscaPub { total, achados })
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -507,7 +544,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
+            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, tem_baixador, abrir_baixador, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

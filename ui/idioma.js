@@ -33,6 +33,8 @@ const EN = {
   'Histórico': 'History',
   'Configurações': 'Settings',
   'Buscar na Bíblia': 'Search the Bible',
+  'Buscar nas publicações': 'Search publications',
+  'BÍBLIA': 'BIBLE',
   'Marcadores': 'Bookmarks',
   'Mais opções': 'More options',
   'Ordenar': 'Sort',
@@ -120,6 +122,7 @@ const EN = {
   ' (mostrando {n})': ' (showing {n})',
   // Biblioteca
   'Remover da biblioteca': 'Remove from library',
+  'Baixar publicações': 'Download publications',
   'Remover': 'Remove',
   '"{x}" sai da biblioteca deste computador. Seus grifos e notas continuam guardados e voltam se você importar a publicação de novo.':
     '"{x}" will be removed from this computer\'s library. Your highlights and notes are kept and come back if you import the publication again.',

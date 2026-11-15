@@ -50,3 +50,13 @@ fn restaura_backup_real_do_aparelho() {
     println!("{r:?}");
     let _ = std::fs::remove_file(saida);
 }
+
+#[test]
+fn busca_nas_publicacoes() {
+    let Some(raiz) = raiz() else { return };
+    let indice = std::env::temp_dir().join(format!("leitor-busca-pub-{}.db", std::process::id()));
+    let (total, achados) = leitor_nucleo::busca::buscar_publicacoes(&raiz, &indice, "gibeonitas", false, 10).unwrap();
+    assert!(total > 0);
+    println!("{total} achados; 1º: {} — {} — {}", achados[0].titulo, achados[0].publicacao, achados[0].trecho);
+    let _ = std::fs::remove_file(indice);
+}
