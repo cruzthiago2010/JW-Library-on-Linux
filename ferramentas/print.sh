@@ -7,7 +7,7 @@ SAIDA="$1"; shift
 B="${CARGO_TARGET_DIR:-$(dirname "$0")/../target}/debug/leitor-jw"
 pkill -x leitor-jw; sleep 1
 setsid -f "$B" > "$SAIDA/app.log" 2>&1
-for i in $(seq 20); do W=$(xdotool search --name "^Leitor JW$" | tail -1); [ -n "$W" ] && break; sleep 0.5; done
+for i in $(seq 20); do W=$(xdotool search --name "^JW Library on Linux$" | tail -1); [ -n "$W" ] && break; sleep 0.5; done
 [ -z "$W" ] && { echo "janela do app não apareceu"; exit 1; }
 xdotool windowmove "$W" 0 0; xdotool windowsize "$W" 1456 860; xdotool windowfocus "$W" 2>/dev/null; sleep 3
 for passo in "$@"; do

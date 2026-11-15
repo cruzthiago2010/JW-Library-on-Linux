@@ -1,4 +1,4 @@
-// Leitor JW — a moldura: trilho de 5 seções, cada uma com a sua pilha de telas
+// JW Library on Linux — a moldura: trilho de 5 seções, cada uma com a sua pilha de telas
 // (como no JW Library do Windows: voltar à seção devolve onde se parou; a seta ← sobe um nível).
 const tauri = window.__TAURI__;
 const chamar = (cmd, args) => tauri.core.invoke(cmd, args);
@@ -158,7 +158,7 @@ function configuracoes() {
       `<option value="${k}"${k === t ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
     <label class="opcao">Avisar sobre arquivos .jwpub novos em Downloads <input type="checkbox" id="avisar"${ler('avisar_downloads', true) ? ' checked' : ''}></label>
     <div class="grupo">Sobre</div>
-    <p>Leitor JW 0.1 — leitor de publicações .jwpub para Linux, feito pela comunidade. Não é um aplicativo oficial.</p>`;
+    <p>JW Library on Linux 0.1 — leitor de publicações .jwpub para Linux, feito pela comunidade. Não é um aplicativo oficial.</p>`;
   const f = dialogo('Configurações', corpo);
   f.querySelector('#tema').onchange = (e) => { guardar('tema', e.target.value); aplicarTema(); };
   f.querySelector('#avisar').onchange = (e) => { guardar('avisar_downloads', e.target.checked); desenhar(); };
@@ -375,7 +375,7 @@ async function backup() {
   rodape.prepend(criar, restaurar);
   criar.onclick = async () => {
     const hoje = new Date().toISOString().slice(0, 10);
-    const destino = await tauri.dialog.save({ title: 'Criar backup', defaultPath: `UserdataBackup_${hoje}_Leitor_JW.jwlibrary`, filters: [{ name: 'Backup do JW Library', extensions: ['jwlibrary'] }] });
+    const destino = await tauri.dialog.save({ title: 'Criar backup', defaultPath: `UserdataBackup_${hoje}_JW_Library_on_Linux.jwlibrary`, filters: [{ name: 'Backup do JW Library', extensions: ['jwlibrary'] }] });
     if (!destino) return;
     try { const x = await chamar('criar_backup', { destino }); f.remove(); aviso(`Backup criado com ${conta(x)}.`, 6000); }
     catch (erro) { aviso('Não deu para criar o backup: ' + erro, 8000); }
@@ -407,7 +407,7 @@ const TELAS = {
     const lidos = ler('historico', []).slice(0, 8);
     const recentes = biblioteca.cartoes.slice().sort((a, b) => b.ano - a.ano || b.edicao - a.edicao).slice(0, 6);
     c.innerHTML = `<div class="tela">
-      <div class="boas-vindas"><h1>Bem-vindo ao Leitor JW</h1>
+      <div class="boas-vindas"><h1>Bem-vindo ao JW Library on Linux</h1>
         <p>${biblioteca.cartoes.length ? `${biblioteca.cartoes.length} publicações na sua biblioteca.` : 'Importe os arquivos .jwpub que você já tem para começar a ler.'}</p>
         <button class="botao" id="imp">Importar publicações</button></div>
       ${lidos.length ? `<div class="secao-titulo">Continuar lendo</div><div class="lista">${lidos.map((h, i) =>

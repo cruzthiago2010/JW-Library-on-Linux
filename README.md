@@ -1,4 +1,4 @@
-# JW Library for Linux (Leitor JW)
+# JW Library on Linux
 
 Leitor de publicações `.jwpub` no estilo do JW Library do Windows, para quem usa Linux.
 Funciona sem internet: você importa os arquivos `.jwpub` que já tem (baixados no jw.org ou copiados
@@ -23,8 +23,8 @@ CSS do JW Library: o visual das publicações vem de um CSS próprio (`ui/estilo
 
 ## Instalar
 
-- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.0_amd64.deb`
-- Outras distribuições: dê permissão de execução ao `Leitor_JW-0.1.0-x86_64.AppImage` e abra.
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.1_amd64.deb`
+- Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.1.1-x86_64.AppImage` e abra.
 
 Os dados ficam em `~/.local/share/io.github.leitorjw/` (`biblioteca/` com as publicações e
 `userData.db` com grifos e notas, no formato do JW Library).

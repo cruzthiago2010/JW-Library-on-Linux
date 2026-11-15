@@ -414,7 +414,7 @@ fn criar_backup(app: tauri::AppHandle, destino: String) -> Result<backup::Resumo
     if destino.extension().and_then(|e| e.to_str()) != Some("jwlibrary") {
         destino.set_extension("jwlibrary");
     }
-    backup::criar(&estado.dados.join("userData.db"), &destino, "Leitor JW (Linux)")
+    backup::criar(&estado.dados.join("userData.db"), &destino, "JW Library on Linux")
 }
 
 /// Confere o backup e mostra o que tem, sem trocar nada ainda.

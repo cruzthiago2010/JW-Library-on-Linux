@@ -1,8 +1,10 @@
-# Leitor JW 0.1.0 — primeira versão
+# JW Library on Linux 0.1.1
+
+- O app passa a se chamar **JW Library on Linux** (antes "Leitor JW"). Grifos, notas e publicações continuam no mesmo lugar.
+
+# 0.1.0 — primeira versão
 
 Leitor de publicações `.jwpub` para Linux, no estilo do JW Library do Windows. Funciona sem internet.
-
-## O que tem
 
 - Biblioteca por categorias, anos e edições; importar `.jwpub` pelo botão, arrastando ou pelo aviso da pasta Downloads.
 - Leitor com painel de estudo (notas de rodapé, textos citados), tamanho do texto, tela inteira e tema escuro.
@@ -13,7 +15,7 @@ Leitor de publicações `.jwpub` para Linux, no estilo do JW Library do Windows.
 
 ## Instalar
 
-- Debian, Ubuntu, Mint: baixe `leitor-jw_0.1.0_amd64.deb` e rode `sudo apt install ./leitor-jw_0.1.0_amd64.deb`.
-- Outras distribuições: baixe `Leitor_JW-0.1.0-x86_64.AppImage`, dê permissão de execução e abra.
+- Debian, Ubuntu, Mint: baixe `leitor-jw_0.1.1_amd64.deb` e rode `sudo apt install ./leitor-jw_0.1.1_amd64.deb`.
+- Outras distribuições: baixe `JW_Library_on_Linux-0.1.1-x86_64.AppImage`, dê permissão de execução e abra.
 
 Só para computadores de 64 bits (x86_64). Nenhuma publicação vem junto: importe os arquivos `.jwpub` que você já tem.

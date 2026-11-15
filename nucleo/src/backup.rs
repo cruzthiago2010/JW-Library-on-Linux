@@ -169,11 +169,11 @@ mod testes {
             p.anotar(&id, None, Some(1), Some(&g), "t", "texto", &["a".into()]).unwrap();
         }
         let arquivo = pasta.join("teste.jwlibrary");
-        let r = criar(&banco, &arquivo, "Leitor JW (Linux)").unwrap();
+        let r = criar(&banco, &arquivo, "JW Library on Linux").unwrap();
         assert_eq!((r.grifos, r.notas, r.etiquetas), (1, 1, 1));
         let volta = extrair(&arquivo, &pasta.join("volta.db")).unwrap();
         assert_eq!((volta.grifos, volta.notas, volta.etiquetas), (1, 1, 1));
-        assert_eq!(volta.aparelho, "Leitor JW (Linux)");
+        assert_eq!(volta.aparelho, "JW Library on Linux");
         let _ = fs::remove_dir_all(&pasta);
     }
 }

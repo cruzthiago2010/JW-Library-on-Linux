@@ -1,4 +1,4 @@
-// Ícones próprios do Leitor JW (traços simples, 24×24).
+// Ícones próprios do JW Library on Linux (traços simples, 24×24).
 const ICONES = {
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   voltar: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
