@@ -246,10 +246,15 @@ function removerPublicacao(pasta, titulo, tamanho = 0) {
 // O baixador (projeto irmão) busca e baixa as publicações do jw.org e as instala
 // na mesma Biblioteca. Instalado: abre. Senão: explica e leva à página dele.
 function baixarPublicacoes() {
-  if (temBaixador === 'instalado') return chamar('abrir_baixador').catch((x) => aviso(String(x)));
+  if (temBaixador === 'instalado') return chamar('abrir_baixador').catch(() => explicarBaixador());
+  explicarBaixador();
+}
+function explicarBaixador() {
   const corpo = `<p>${t('O Baixador para JW Library on Linux escolhe as publicações e o idioma, baixa os arquivos .jwpub do jw.org e os coloca direto na sua Biblioteca. Ele também avisa quando sai uma edição nova ou uma atualização.')}</p>
-    <p>${temBaixador === 'flatpak' ? t('Depois de instalado, abra o Baixador pelo menu de aplicativos. As publicações aparecem aqui sozinhas.') : t('Depois de instalado, este botão abre o Baixador direto.')}</p>`;
-  dialogo(t('Baixar publicações'), corpo, [[t('Agora não'), null], [t('Conhecer o Baixador'), abrirPaginaBaixador]]);
+    <p>${temBaixador === 'flatpak' ? t('Se ele já estiver instalado, use "Abrir o Baixador". As publicações aparecem aqui sozinhas.') : t('Depois de instalado, este botão abre o Baixador direto.')}</p>`;
+  const botoes = [[t('Agora não'), null], [t('Conhecer o Baixador'), abrirPaginaBaixador]];
+  if (temBaixador === 'flatpak') botoes.splice(1, 0, [t('Abrir o Baixador'), () => chamar('abrir_baixador').catch(abrirPaginaBaixador)]);
+  dialogo(t('Baixar publicações'), corpo, botoes);
 }
 function abrirPaginaBaixador() {
   const abrirUrl = tauri.opener?.openUrl;

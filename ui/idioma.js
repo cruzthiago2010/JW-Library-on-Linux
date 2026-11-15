@@ -130,7 +130,8 @@ const EN = {
   'Baixar publicações': 'Download publications',
   'O Baixador para JW Library on Linux escolhe as publicações e o idioma, baixa os arquivos .jwpub do jw.org e os coloca direto na sua Biblioteca. Ele também avisa quando sai uma edição nova ou uma atualização.':
     'The Downloader for JW Library on Linux lets you pick publications and a language, downloads the .jwpub files from jw.org and puts them straight into your Library. It also tells you when a new issue or an update comes out.',
-  'Depois de instalado, abra o Baixador pelo menu de aplicativos. As publicações aparecem aqui sozinhas.': 'Once installed, open the Downloader from your applications menu. Publications show up here by themselves.',
+  'Se ele já estiver instalado, use "Abrir o Baixador". As publicações aparecem aqui sozinhas.': 'If it is already installed, use "Open the Downloader". Publications show up here by themselves.',
+  'Abrir o Baixador': 'Open the Downloader',
   'Depois de instalado, este botão abre o Baixador direto.': 'Once installed, this button opens the Downloader directly.',
   'Agora não': 'Not now',
   'Conhecer o Baixador': 'Get the Downloader',

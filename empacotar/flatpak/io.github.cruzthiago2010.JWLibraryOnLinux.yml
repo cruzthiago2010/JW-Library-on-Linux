@@ -18,6 +18,8 @@ finish-args:
   - --filesystem=xdg-data/io.github.leitorjw:create
   # Para o aviso de arquivos .jwpub novos em Downloads.
   - --filesystem=xdg-download:ro
+  # Instância única (tauri-plugin-single-instance usa este nome no D-Bus).
+  - --own-name=io.github.leitorjw.SingleInstance
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin
 modules:

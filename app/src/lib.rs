@@ -88,25 +88,40 @@ fn baixador() -> Option<PathBuf> {
     std::env::split_paths(&caminhos).map(|d| d.join("jw-baixador")).find(|c| c.is_file())
 }
 
-/// "instalado" (dá para abrir daqui), "flatpak" (o app está no Flatpak e não
-/// enxerga outros programas) ou "nao".
+/// O baixador registrou o endereço `jw-baixador://` no sistema (fora do Flatpak).
+fn baixador_registrado() -> bool {
+    std::process::Command::new("xdg-mime")
+        .args(["query", "default", "x-scheme-handler/jw-baixador"])
+        .output()
+        .map(|s| !String::from_utf8_lossy(&s.stdout).trim().is_empty())
+        .unwrap_or(false)
+}
+
+/// "instalado" (dá para abrir daqui), "flatpak" (dentro do Flatpak não dá para
+/// saber se ele existe; tenta-se pelo endereço) ou "nao".
 #[tauri::command]
 fn tem_baixador() -> &'static str {
-    if baixador().is_some() {
-        "instalado"
-    } else if std::env::var_os("FLATPAK_ID").is_some() {
+    if std::env::var_os("FLATPAK_ID").is_some() {
         "flatpak"
+    } else if baixador().is_some() || baixador_registrado() {
+        "instalado"
     } else {
         "nao"
     }
 }
 
 /// Abre o baixador de publicações (projeto irmão), que instala os .jwpub na
-/// mesma pasta da Biblioteca.
+/// mesma pasta da Biblioteca: pelo programa no PATH ou pelo endereço
+/// `jw-baixador://abrir` (no Flatpak, via portal).
 #[tauri::command]
-fn abrir_baixador() -> Result<(), String> {
-    let programa = baixador().ok_or(leitor_nucleo::idioma::t("o baixador não está instalado", "the downloader is not installed"))?;
-    std::process::Command::new(programa).spawn().map(|_| ()).map_err(|e| e.to_string())
+fn abrir_baixador(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    if std::env::var_os("FLATPAK_ID").is_none() {
+        if let Some(programa) = baixador() {
+            return std::process::Command::new(programa).spawn().map(|_| ()).map_err(|e| e.to_string());
+        }
+    }
+    app.opener().open_url("jw-baixador://abrir", None::<&str>).map_err(|e| e.to_string())
 }
 
 fn nome(c: &Path) -> String {
@@ -539,6 +554,15 @@ fn servir<R: tauri::Runtime>(ctx: UriSchemeContext<'_, R>, pedido: Request<Vec<u
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Uma janela só: abrir de novo (por exemplo, pelo endereço
+        // jw-library-linux://abrir vindo do baixador) traz a janela aberta para a frente.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _pasta| {
+            if let Some(janela) = app.get_webview_window("main") {
+                let _ = janela.unminimize();
+                let _ = janela.show();
+                let _ = janela.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("conteudo", servir)
