@@ -1,3 +1,14 @@
+# JW Library on Linux 0.5.0
+
+- **Aba BAIXAR na Biblioteca** (o antigo Baixador, agora embutido): catálogo, Minha seleção, "Baixar agora", procurar atualizações uma vez por dia e aviso de edição nova ou arquivo atualizado. Quem usava o Baixador separado tem a seleção trazida sozinha. / **DOWNLOAD tab** in the Library (the former Downloader, now built in).
+- Excluir publicação pelo menu "..." do cartão (Abrir · Excluir), como no JW Library. / Delete a publication from the card's "..." menu.
+- Janela única: abrir o app de novo traz a janela aberta para a frente. / Single window.
+
+## Instalar · Install
+
+- Flatpak: `flatpak install --user JW_Library_on_Linux-0.5.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`)
+- AppImage: `chmod +x JW_Library_on_Linux-0.5.0-x86_64.AppImage` e abra / and run it (ARM: `-aarch64.AppImage`)
+
 # JW Library on Linux 0.4.0
 
 - **Flatpak** (x86_64 e ARM64): instala em qualquer distribuição. O .deb deixa de existir; ficam **Flatpak** e **AppImage**. / Flatpak packages; the .deb is gone, Flatpak and AppImage remain.

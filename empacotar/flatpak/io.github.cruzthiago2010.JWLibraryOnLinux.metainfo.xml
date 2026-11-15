@@ -12,6 +12,7 @@
     <ul>
       <li>Library by category, Bible with study notes and search, meetings of the week</li>
       <li>Highlights in six colors, notes with tags and bookmarks</li>
+      <li>Download tab: pick publications, download them from jw.org and get notified about new issues and updates</li>
       <li>Backup in the same .jwlibrary format used on phones</li>
       <li>English and Brazilian Portuguese interface</li>
     </ul>
@@ -25,6 +26,7 @@
   </screenshots>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.5.0" date="2026-11-15"/>
     <release version="0.4.0" date="2026-11-15"/>
     <release version="0.3.0" date="2026-11-15"/>
   </releases>

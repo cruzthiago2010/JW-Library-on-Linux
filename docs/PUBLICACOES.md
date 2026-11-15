@@ -8,8 +8,11 @@
 
 ### Resumo
 
-1. Baixe o `.jwpub` no jw.org (na página da publicação, botão de download, formato **JWPUB**).
-2. No app, importe o arquivo. Há três jeitos, explicados abaixo.
+1. O mais fácil: **Biblioteca → aba BAIXAR**. Escolha as publicações e o idioma, vá em
+   **Minha seleção** e toque em **Baixar agora**. Elas vão direto para a Biblioteca, e o app avisa
+   quando sai edição nova ou atualização.
+2. Ou baixe o `.jwpub` no jw.org (na página da publicação, formato **JWPUB**) e importe o arquivo.
+   Há três jeitos, explicados abaixo.
 3. Pronto: o app guarda uma cópia própria, e o arquivo baixado pode ser apagado.
 
 Você **não precisa** colocar os `.jwpub` numa pasta especial. O app só lê o que foi importado.
@@ -66,8 +69,11 @@ Ao importar, o app abre o `.jwpub` e guarda o conteúdo em:
 
 ### In short
 
-1. Download the `.jwpub` from jw.org (on the publication's page, download button, **JWPUB** format).
-2. Import the file in the app. There are three ways, explained below.
+1. The easiest: **Library → DOWNLOAD tab**. Pick publications and a language, go to **My
+   selection** and tap **Download now**. They go straight into the Library, and the app tells you
+   when a new issue or an update comes out.
+2. Or download the `.jwpub` from jw.org (on the publication's page, **JWPUB** format) and import it.
+   There are three ways, explained below.
 3. Done: the app keeps its own copy, so you can delete the downloaded file.
 
 You **don't need** to put `.jwpub` files in any special folder. The app only reads what you imported.

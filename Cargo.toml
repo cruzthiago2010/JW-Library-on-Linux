@@ -1,6 +1,6 @@
 # Leitor no estilo JW Library para Linux: o núcleo (sem Tauri, testável) e a casca Tauri.
 [workspace]
-members = ["nucleo", "app"]
+members = ["nucleo", "baixar", "app"]
 resolver = "2"
 
 [profile.release]
@@ -13,4 +13,6 @@ codegen-units = 1
 [profile.dev.package.leitor-jw]
 debug = 0
 [profile.dev.package.leitor-nucleo]
+debug = 0
+[profile.dev.package.leitor-baixar]
 debug = 0

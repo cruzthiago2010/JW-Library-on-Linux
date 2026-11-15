@@ -14,6 +14,8 @@ finish-args:
   - --socket=fallback-x11
   - --share=ipc
   - --device=dri
+  # A aba BAIXAR busca as publicações no jw.org.
+  - --share=network
   # A mesma pasta de dados do AppImage e do baixador (publicações, grifos e notas).
   - --filesystem=xdg-data/io.github.leitorjw:create
   # Para o aviso de arquivos .jwpub novos em Downloads.

@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use leitor_nucleo::pessoal::{self, Alvo, Faixa, Identidade, Pessoal};
+mod baixar;
+
 use leitor_nucleo::{backup, biblia, biblioteca, busca, estudo, jwpub, leitor, reunioes};
 use tauri::http::{header, Request, Response, StatusCode};
 use tauri::{Manager, UriSchemeContext};
@@ -79,49 +81,10 @@ async fn importar(app: tauri::AppHandle, caminhos: Vec<String>) -> Result<Import
 #[tauri::command]
 async fn remover_publicacao(app: tauri::AppHandle, pasta: String) -> Result<(), String> {
     let raiz = raiz(&app);
-    tauri::async_runtime::spawn_blocking(move || jwpub::remover(&raiz, &pasta)).await.map_err(|e| e.to_string())?
-}
-
-/// O programa do baixador (`jw-baixador`), se estiver no PATH.
-fn baixador() -> Option<PathBuf> {
-    let caminhos = std::env::var_os("PATH")?;
-    std::env::split_paths(&caminhos).map(|d| d.join("jw-baixador")).find(|c| c.is_file())
-}
-
-/// O baixador registrou o endereço `jw-baixador://` no sistema (fora do Flatpak).
-fn baixador_registrado() -> bool {
-    std::process::Command::new("xdg-mime")
-        .args(["query", "default", "x-scheme-handler/jw-baixador"])
-        .output()
-        .map(|s| !String::from_utf8_lossy(&s.stdout).trim().is_empty())
-        .unwrap_or(false)
-}
-
-/// "instalado" (dá para abrir daqui), "flatpak" (dentro do Flatpak não dá para
-/// saber se ele existe; tenta-se pelo endereço) ou "nao".
-#[tauri::command]
-fn tem_baixador() -> &'static str {
-    if std::env::var_os("FLATPAK_ID").is_some() {
-        "flatpak"
-    } else if baixador().is_some() || baixador_registrado() {
-        "instalado"
-    } else {
-        "nao"
-    }
-}
-
-/// Abre o baixador de publicações (projeto irmão), que instala os .jwpub na
-/// mesma pasta da Biblioteca: pelo programa no PATH ou pelo endereço
-/// `jw-baixador://abrir` (no Flatpak, via portal).
-#[tauri::command]
-fn abrir_baixador(app: tauri::AppHandle) -> Result<(), String> {
-    use tauri_plugin_opener::OpenerExt;
-    if std::env::var_os("FLATPAK_ID").is_none() {
-        if let Some(programa) = baixador() {
-            return std::process::Command::new(programa).spawn().map(|_| ()).map_err(|e| e.to_string());
-        }
-    }
-    app.opener().open_url("jw-baixador://abrir", None::<&str>).map_err(|e| e.to_string())
+    let pasta2 = pasta.clone();
+    tauri::async_runtime::spawn_blocking(move || jwpub::remover(&raiz, &pasta2)).await.map_err(|e| e.to_string())??;
+    baixar::esquecer_pasta(&app, &pasta);
+    Ok(())
 }
 
 fn nome(c: &Path) -> String {
@@ -564,7 +527,6 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("conteudo", servir)
         .setup(|app| {
             // No Flatpak a pasta de dados seria ~/.var/app/<id>/…; usamos a mesma do
@@ -577,13 +539,14 @@ pub fn run() {
             let raiz = dados.join("biblioteca");
             fs::create_dir_all(&raiz)?;
             let pessoal = Pessoal::abrir(&dados.join("userData.db")).map_err(|e| e.to_string())?;
+            app.manage(baixar::EstadoBaixar::novo(&dados));
             app.manage(Estado { raiz, dados, pessoal: Mutex::new(pessoal) });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, tem_baixador, abrir_baixador, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
+            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, baixar::baixar_catalogo, baixar::baixar_selecao, baixar::baixar_escolher, baixar::baixar_tirar, baixar::baixar_sincronizar, baixar::baixar_atualizar, baixar::baixar_ocupado, baixar::baixar_procurar, baixar::baixar_opcoes, baixar::baixar_atualizar_sozinho, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

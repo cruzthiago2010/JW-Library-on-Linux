@@ -2,7 +2,7 @@
 // (como no JW Library do Windows: voltar à seção devolve onde se parou; a seta ← sobe um nível).
 const tauri = window.__TAURI__;
 const chamar = (cmd, args) => tauri.core.invoke(cmd, args);
-const VERSAO = '0.4';
+const VERSAO = '0.5';
 
 const SECOES = [
   ['inicio', 'Início', 'inicio'],
@@ -15,8 +15,6 @@ const pilhas = Object.fromEntries(SECOES.map(([s]) => [s, [{ tela: s }]]));
 let secao = 'inicio';
 let base = '';
 let biblioteca = { categorias: [], cartoes: [] };
-let temBaixador = 'nao';
-const URL_BAIXADOR = 'https://github.com/cruzthiago2010/JW-Library-Downloader-on-Linux';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -93,6 +91,7 @@ async function desenhar() {
   } catch (erro) {
     c.innerHTML = `<div class="vazio"><h2>${t('Não deu para abrir')}</h2><p>${esc(erro)}</p></div>`;
   }
+  if (['inicio', 'biblioteca'].includes(entrada.tela) && typeof Baixar !== 'undefined') Baixar.mostrarFaixa();
   if (entrada.rolagem != null) c.scrollTop = entrada.rolagem;
   else c.scrollTop = 0;
 }
@@ -245,34 +244,11 @@ function removerPublicacao(pasta, titulo, tamanho = 0) {
 
 // O baixador (projeto irmão) busca e baixa as publicações do jw.org e as instala
 // na mesma Biblioteca. Instalado: abre. Senão: explica e leva à página dele.
+// A aba BAIXAR da Biblioteca (o baixador embutido, em baixar.js).
 function baixarPublicacoes() {
-  if (temBaixador === 'instalado') return chamar('abrir_baixador').catch(() => explicarBaixador());
-  explicarBaixador();
-}
-function explicarBaixador() {
-  const corpo = `<p>${t('O Baixador para JW Library on Linux escolhe as publicações e o idioma, baixa os arquivos .jwpub do jw.org e os coloca direto na sua Biblioteca. Ele também avisa quando sai uma edição nova ou uma atualização.')}</p>
-    <p>${temBaixador === 'flatpak' ? t('Se ele já estiver instalado, use "Abrir o Baixador". As publicações aparecem aqui sozinhas.') : t('Depois de instalado, este botão abre o Baixador direto.')}</p>`;
-  const botoes = [[t('Agora não'), null], [t('Conhecer o Baixador'), abrirPaginaBaixador]];
-  if (temBaixador === 'flatpak') botoes.splice(1, 0, [t('Abrir o Baixador'), () => chamar('abrir_baixador').catch(abrirPaginaBaixador)]);
-  dialogo(t('Baixar publicações'), corpo, botoes);
-}
-function abrirPaginaBaixador() {
-  const abrirUrl = tauri.opener?.openUrl;
-  if (abrirUrl) abrirUrl(URL_BAIXADOR).catch(() => aviso(URL_BAIXADOR, 10000));
-  else aviso(URL_BAIXADOR, 10000);
-}
-function faixaBaixador(c) {
-  if (temBaixador === 'instalado' || ler('aviso_baixador_fechado', false)) return;
-  const f = document.createElement('div');
-  f.className = 'faixa-baixador';
-  f.innerHTML = `${icone('nuvem')}<span>${t('Busque e baixe publicações do jw.org com o Baixador para JW Library on Linux.')}</span>
-    <button class="botao" data-o="ver">${t('Conhecer o Baixador')}</button><button class="fechar-faixa" data-o="fechar" title="${t('Fechar')}">×</button>`;
-  f.onclick = (e) => {
-    const o = e.target.closest('[data-o]')?.dataset.o;
-    if (o === 'ver') abrirPaginaBaixador();
-    if (o === 'fechar') { guardar('aviso_baixador_fechado', true); f.remove(); }
-  };
-  c.querySelector('.boas-vindas')?.after(f);
+  secao = 'biblioteca';
+  pilhas.biblioteca = [{ tela: 'biblioteca', aba: 'baixar' }];
+  desenhar();
 }
 
 async function carregarBiblioteca() {
@@ -494,18 +470,18 @@ const TELAS = {
     c.innerHTML = `<div class="tela">
       <div class="boas-vindas"><h1>${t('Bem-vindo ao JW Library on Linux')}</h1>
         <p>${biblioteca.cartoes.length ? t('{n} publicações na sua biblioteca.', { n: biblioteca.cartoes.length }) : t('Importe os arquivos .jwpub que você já tem para começar a ler.')}</p>
-        <button class="botao" id="imp">${t('Importar publicações')}</button></div>
+        <button class="botao" id="baixar-inicio">${t('Baixar publicações')}</button> <button class="botao leve" id="imp">${t('Importar publicações')}</button></div>
       ${lidos.length ? `<div class="secao-titulo">${t('Continuar lendo')}</div><div class="lista">${lidos.map((h, i) =>
         `<button class="item" data-h="${i}"><div><div class="t">${esc(h.titulo)}</div><div class="m">${esc(h.publicacao)}</div></div></button>`).join('')}</div>` : ''}
       ${recentes.length ? `<div class="secao-titulo">${t('Mais recentes na biblioteca')}</div><div class="grade">${recentes.map((r) => cartao(r)).join('')}</div>` : ''}
     </div>`;
     $('#imp').onclick = escolherArquivos;
+    $('#baixar-inicio').onclick = baixarPublicacoes;
     c.querySelectorAll('[data-h]').forEach((b) => (b.onclick = () => {
       abrirDoHistorico(lidos[+b.dataset.h]);
     }));
     ligarCartoes(c);
     faixaNovos(c);
-    faixaBaixador(c);
   },
 
   async biblia(c) {
@@ -663,11 +639,15 @@ const TELAS = {
       m.onclick = (x) => { const o = x.target.dataset.o; if (o) { e.ordem = o; desenhar(); } };
     }]);
     barra(t('Biblioteca'), Idioma.nome, acoes);
-    const abas = `<div class="abas">${[['publicacoes', 'PUBLICAÇÕES'], ['baixados', 'BAIXADOS']].map(([k, n]) =>
+    const abas = `<div class="abas">${[['publicacoes', 'PUBLICAÇÕES'], ['baixados', 'BAIXADOS'], ['baixar', 'BAIXAR']].map(([k, n]) =>
       `<button data-aba="${k}" class="${k === aba ? 'ativa' : ''}">${t(n)}</button>`).join('')}</div>`;
-    if (!biblioteca.cartoes.length) {
-      c.innerHTML = `<div class="tela">${abas}<div class="vazio"><h2>${t('A biblioteca está vazia')}</h2><p>${t('Arraste arquivos .jwpub para esta janela ou use o botão abaixo.')}</p><button class="botao" id="imp">${t('Importar publicações')}</button></div></div>`;
+    if (aba === 'baixar') {
+      c.innerHTML = `<div class="tela">${abas}<div class="lugar-baixar"></div></div>`;
+      Baixar.montar(c.querySelector('.lugar-baixar'));
+    } else if (!biblioteca.cartoes.length) {
+      c.innerHTML = `<div class="tela">${abas}<div class="vazio"><h2>${t('A biblioteca está vazia')}</h2><p>${t('Baixe publicações na aba BAIXAR, arraste arquivos .jwpub para esta janela ou use o botão abaixo.')}</p><button class="botao" id="baixar-vazio">${t('Baixar publicações')}</button> <button class="botao leve" id="imp">${t('Importar publicações')}</button></div></div>`;
       $('#imp').onclick = escolherArquivos;
+      $('#baixar-vazio').onclick = baixarPublicacoes;
     } else if (aba === 'publicacoes') {
       c.innerHTML = `<div class="tela">${abas}<div class="grade">${biblioteca.categorias.map((k) =>
         `<button class="categoria" data-cat="${k.chave}">${icone(ICONE_CATEGORIA[k.chave] || 'livro')}<span>${esc(k.nome)}</span><span class="quantas">${k.quantas}</span></button>`).join('')}</div></div>`;
@@ -850,7 +830,6 @@ function escolherIdioma() {
   montarTrilho();
   try { await carregarBiblioteca(); } catch (e) { aviso(t('Erro ao ler a biblioteca: {x}', { x: e })); }
   ouvirArrastar();
-  try { temBaixador = await chamar('tem_baixador'); } catch (_) {}
   // Ao voltar para a janela (por exemplo, depois de usar o baixador), relê a
   // biblioteca e redesenha as telas que mostram a lista de publicações.
   window.addEventListener('focus', async () => {
@@ -861,4 +840,5 @@ function escolherIdioma() {
     if (['inicio', 'biblioteca', 'categoria', 'reunioes', 'biblia'].includes(p[p.length - 1].tela)) desenhar();
   });
   desenhar();
+  setTimeout(() => typeof Baixar !== 'undefined' && Baixar.procurarAoAbrir(), 1500);
 })();

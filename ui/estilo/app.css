@@ -351,3 +351,38 @@ body.soltando #soltar { display: grid; }
 .faixa-baixador span { flex: 1; }
 .faixa-baixador .fechar-faixa { width: 30px; height: 30px; border-radius: 50%; font-size: 18px; color: var(--texto-suave); }
 .faixa-baixador .fechar-faixa:hover { background: var(--fundo-bloco); }
+
+/* Aba BAIXAR (o baixador embutido). */
+.sub-abas { display: flex; gap: 8px; margin: 4px 0 16px; }
+.sub-abas button { padding: 6px 14px; border-radius: 16px; border: 1px solid var(--borda); font-size: 13px; }
+.sub-abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+.baixar-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; }
+.baixar-topo select { margin-left: 6px; padding: 4px 6px; }
+.baixar .op { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.cartao-baixar { display: flex; gap: 12px; padding: 10px; border: 1px solid var(--borda); border-radius: 4px; background: var(--fundo); }
+.cartao-baixar.escolhido { border-color: var(--roxo); box-shadow: inset 3px 0 0 var(--roxo); }
+.cartao-baixar .corpo { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; min-width: 0; }
+.cartao-baixar .t, .baixar .fila .t { font-weight: 600; line-height: 1.3; }
+.cartao-baixar .m, .baixar .fila .m { color: var(--texto-suave); font-size: 12px; }
+.baixar .capa { width: 56px; height: 56px; object-fit: cover; border-radius: 2px; flex: none; }
+.baixar .semcapa { display: grid; place-items: center; background: var(--fundo-bloco); color: var(--texto-suave); font-size: 12px; font-weight: 700; }
+.botao.pequeno { padding: 4px 10px; font-size: 12px; }
+.baixar .outra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.baixar .outra input { padding: 6px 8px; border: 1px solid var(--borda); border-radius: 4px; background: var(--fundo); color: var(--texto); }
+.baixar .fila { display: flex; align-items: center; gap: 12px; padding: 10px 6px; border-bottom: 1px solid var(--borda); }
+.baixar .fila .corpo { flex: 1; min-width: 0; }
+#andamento:not(:empty) { margin-top: 18px; padding: 12px; border: 1px solid var(--borda); border-radius: 6px; }
+#andamento h3 { margin: 0 0 10px; font-size: 14px; }
+#andamento .arquivo { display: grid; grid-template-columns: 160px 1fr 140px; gap: 10px; align-items: center; font-size: 12px; margin-bottom: 6px; }
+#andamento .barra { height: 6px; background: var(--fundo-bloco); border-radius: 3px; overflow: hidden; }
+#andamento .barra div { height: 100%; background: var(--roxo); }
+#andamento .erro .barra div { background: #c0392b; }
+#andamento .fim { margin-top: 10px; font-weight: 600; }
+#andamento .fim.ruim { color: #c0392b; }
+.aviso-termos { margin-top: 24px; }
+.faixa-novidade { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 16px; border-radius: 6px; background: var(--roxo); color: #fff; }
+.faixa-novidade > svg { width: 22px; height: 22px; flex: none; }
+.faixa-novidade .texto { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.faixa-novidade .texto span { font-size: 12px; opacity: .85; }
+.faixa-novidade .botao { background: #fff; color: var(--roxo-escuro); }
+.faixa-novidade .fechar-faixa { color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; }

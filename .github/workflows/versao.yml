@@ -30,7 +30,7 @@ jobs:
         with:
           tool: tauri-cli@2
       - name: Testes do núcleo
-        run: cargo test -p leitor-nucleo
+        run: cargo test -p leitor-nucleo -p leitor-baixar
       - name: Compilar
         working-directory: app
         run: cargo tauri build --bundles appimage

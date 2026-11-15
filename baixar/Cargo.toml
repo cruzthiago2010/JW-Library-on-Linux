@@ -1,0 +1,13 @@
+[package]
+name = "leitor-baixar"
+version = "0.5.0"
+description = "Baixa .jwpub do jw.org para a Biblioteca do JW Library on Linux (catálogo, seleção, atualizações)"
+edition = "2021"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+leitor-nucleo = { path = "../nucleo" }
+ureq = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+md-5 = "0.10"
