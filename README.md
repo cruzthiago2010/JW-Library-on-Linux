@@ -51,6 +51,8 @@ Download from the [Releases](../../releases/latest) page:
 - Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.2_amd64.deb`
 - Other distributions: make `JW_Library_on_Linux-0.1.2-x86_64.AppImage` executable and run it.
 
+📖 **[Where to put your .jwpub files and how to import them](docs/PUBLICACOES.md#english)**
+
 64-bit (x86_64) only. Data lives in `~/.local/share/io.github.leitorjw/` (`biblioteca/` with the
 publications and `userData.db` with highlights and notes, in JW Library's format).
 
@@ -104,6 +106,8 @@ CSS do JW Library: o visual das publicações vem de um CSS próprio (`ui/estilo
 
 - Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.2_amd64.deb`
 - Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.1.2-x86_64.AppImage` e abra.
+
+📖 **[Onde ficam os arquivos .jwpub e como importar](docs/PUBLICACOES.md#português)**
 
 Os dados ficam em `~/.local/share/io.github.leitorjw/` (`biblioteca/` com as publicações e
 `userData.db` com grifos e notas, no formato do JW Library).
