@@ -1,3 +1,13 @@
+# JW Library on Linux 0.8.0
+
+- **Texto diário no Início**, como no JW Library: data, setas para outros dias, o texto e o começo do comentário; um clique abre o dia inteiro. Sem o "Examine as Escrituras Diariamente", o cartão oferece baixar. / **Daily text** on Home.
+- Pronto para o **Flathub**: compila sem internet e o identificador do Flatpak passa a ser `io.github.cruzthiago2010.JW-Library-on-Linux` (quem instalou o Flatpak antigo deve instalar o novo; publicações e grifos continuam na mesma pasta). / Ready for Flathub; new Flatpak app ID.
+
+## Instalar · Install
+
+- Flatpak: `flatpak install --user JW_Library_on_Linux-0.8.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`)
+- AppImage: `chmod +x JW_Library_on_Linux-0.8.0-x86_64.AppImage` e abra / and run it (ARM: `-aarch64.AppImage`)
+
 # JW Library on Linux 0.7.0
 
 - **Notícias no Início**, como no JW Library: a faixa "NOVO VÍDEO | …" com o texto completo ao abrir. / **News banner** on Home.

@@ -1,0 +1,42 @@
+# Manifesto para o Flathub: compila sem internet (as crates vêm de cargo-sources.json)
+# e sem acesso a pastas fora do sandbox, além de Downloads (só leitura).
+# Para gerar cargo-sources.json: python3 ferramentas/cargo_sources.py Cargo.lock > empacotar/flatpak/cargo-sources.json
+id: io.github.cruzthiago2010.JW-Library-on-Linux
+runtime: org.gnome.Platform
+runtime-version: '49'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: leitor-jw
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  # Catálogo, publicações, vídeos e áudios do jw.org.
+  - --share=network
+  # O aviso de arquivos .jwpub novos em Downloads.
+  - --filesystem=xdg-download:ro
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+modules:
+  - name: leitor-jw
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/leitor-jw/cargo
+        CARGO_NET_OFFLINE: 'true'
+    build-commands:
+      - cargo --offline build --release --locked -p leitor-jw --features tauri/custom-protocol
+      - install -Dm755 target/release/leitor-jw /app/bin/leitor-jw
+      - install -Dm644 empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.desktop /app/share/applications/io.github.cruzthiago2010.JW-Library-on-Linux.desktop
+      - install -Dm644 empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.metainfo.xml /app/share/metainfo/io.github.cruzthiago2010.JW-Library-on-Linux.metainfo.xml
+      - install -Dm644 app/icons/icone.svg /app/share/icons/hicolor/scalable/apps/io.github.cruzthiago2010.JW-Library-on-Linux.svg
+      - install -Dm644 app/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.cruzthiago2010.JW-Library-on-Linux.png
+      - install -Dm644 app/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.github.cruzthiago2010.JW-Library-on-Linux.png
+    sources:
+      # No pedido ao Flathub isto vira: type: git, url: https://github.com/cruzthiago2010/JW-Library-on-Linux, tag e commit da versão.
+      - type: dir
+        path: ../..
+        skip: [dist, data, baixador, target, compilacao, .flatpak-builder, docs/interno]
+      - ../flatpak/cargo-sources.json

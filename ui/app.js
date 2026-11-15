@@ -2,7 +2,7 @@
 // (como no JW Library do Windows: voltar à seção devolve onde se parou; a seta ← sobe um nível).
 const tauri = window.__TAURI__;
 const chamar = (cmd, args) => tauri.core.invoke(cmd, args);
-const VERSAO = '0.7';
+const VERSAO = '0.8';
 
 const SECOES = [
   ['inicio', 'Início', 'inicio'],
@@ -185,6 +185,43 @@ async function faixaNoticias(c) {
   };
   f.querySelector('.fechar-faixa').onclick = () => { guardar('noticias_fechadas', [...fechadas, n.guid].slice(-50)); f.remove(); };
   c.querySelector('.tela').prepend(f);
+}
+
+// ---------- Texto diário (Examine as Escrituras Diariamente), como no JW Library ----------
+// Cartão no Início com a data e setas para mudar o dia; um clique abre o texto
+// do dia inteiro (tela "textodia"), também com setas. Sem o Examine: nuvem para baixar.
+const numeroDoDia = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+const diaMais = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const nomeDoDia = (d) => primeiraMaiuscula(d.toLocaleDateString(Idioma.local, { weekday: 'long', day: 'numeric', month: 'long', year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }));
+const primeiraMaiuscula = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+let deslocamentoDiario = 0;
+
+async function cartaoTextoDiario(c) {
+  const lugar = c.querySelector('.lugar-texto-diario');
+  if (!lugar) return;
+  const d = diaMais(new Date(), deslocamentoDiario);
+  let r;
+  try { r = await chamar('texto_diario', { lingua: BibliotecaJW.lingua(), dia: numeroDoDia(d) }); } catch (_) { return; }
+  const cab = `<div class="cab-diario"><button class="seta-dia" data-mover="-1" title="${t('Dia anterior')}">${icone('esq')}</button>
+    <div><span>${t('Texto diário')}</span><small>${esc(nomeDoDia(d))}</small></div>
+    <button class="seta-dia" data-mover="1" title="${t('Dia seguinte')}">${icone('dir')}</button></div>`;
+  if (r.texto) {
+    lugar.innerHTML = `<div class="texto-diario">${cab}<button class="corpo-diario"><article class="documento serifa">${r.texto.html}</article></button></div>`;
+    lugar.querySelector('.corpo-diario').onclick = () => abrir({ tela: 'textodia', dia: numeroDoDia(d) });
+  } else {
+    lugar.innerHTML = `<div class="texto-diario vazio-diario">${cab}
+      <p>${t('Para ver o texto deste dia, baixe o "Examine as Escrituras Diariamente" {a}.', { a: d.getFullYear() })}</p>
+      <button class="botao" id="baixar-diario">${icone('nuvem')} ${t('Baixar o Examine')}</button></div>`;
+    lugar.querySelector('#baixar-diario').onclick = async (ev) => {
+      const b = ev.currentTarget;
+      b.disabled = true;
+      b.textContent = t('Baixando…');
+      try { await chamar('baixar_publicacao', { simbolo: r.falta, lingua: BibliotecaJW.lingua(), edicao: 0 }); }
+      catch (erro) { aviso(String(erro), 6000); b.disabled = false; }
+    };
+  }
+  lugar.querySelectorAll('[data-mover]').forEach((b) => (b.onclick = () => { deslocamentoDiario += +b.dataset.mover; cartaoTextoDiario(c); }));
+  lugar.querySelectorAll('.texto-diario a').forEach((a) => a.addEventListener('click', (ev) => ev.preventDefault()));
 }
 
 // ---------- Arquivos novos em Downloads ----------
@@ -489,6 +526,7 @@ const TELAS = {
       <div class="boas-vindas"><h1>${t('Bem-vindo ao JW Library on Linux')}</h1>
         <p>${biblioteca.cartoes.length ? t('{n} publicações na sua biblioteca.', { n: biblioteca.cartoes.length }) : t('Importe os arquivos .jwpub que você já tem para começar a ler.')}</p>
         <button class="botao" id="baixar-inicio">${t('Baixar publicações')}</button> <button class="botao leve" id="imp">${t('Importar publicações')}</button></div>
+      <div class="lugar-texto-diario"></div>
       ${lidos.length ? `<div class="secao-titulo">${t('Continuar lendo')}</div><div class="lista">${lidos.map((h, i) =>
         `<button class="item" data-h="${i}"><div><div class="t">${esc(h.titulo)}</div><div class="m">${esc(h.publicacao)}</div></div></button>`).join('')}</div>` : ''}
       ${recentes.length ? `<div class="secao-titulo">${t('Mais recentes na biblioteca')}</div><div class="grade">${recentes.map((r) => cartao(r)).join('')}</div>` : ''}
@@ -501,6 +539,7 @@ const TELAS = {
     ligarCartoes(c);
     faixaNovos(c);
     faixaNoticias(c);
+    cartaoTextoDiario(c);
   },
 
   async biblia(c) {
@@ -706,6 +745,23 @@ const TELAS = {
   },
 
   midia(c, e) { return Midia.categoria(c, e); },
+
+  async textodia(c, e) {
+    const d = new Date(Math.floor(e.dia / 10000), Math.floor(e.dia / 100) % 100 - 1, e.dia % 100);
+    const r = await chamar('texto_diario', { lingua: BibliotecaJW.lingua(), dia: e.dia });
+    const tam = ler('tamanho', 18);
+    const acoes = [['historico', t('Histórico'), historico]];
+    if (r.texto) acoes.unshift(['livro', t('Abrir no Examine'), () => abrir({ tela: 'documento', pasta: r.texto.pasta, id: r.texto.documento })]);
+    barra(t('Texto diário'), nomeDoDia(d), acoes);
+    const trocar = (n) => { pilhas[secao][pilhas[secao].length - 1] = { tela: 'textodia', dia: numeroDoDia(diaMais(d, n)) }; desenhar(); };
+    c.innerHTML = `<div class="leitor"><div class="coluna">${r.texto
+      ? `<article class="documento serifa" style="--tam:${tam}px">${r.texto.html}</article>`
+      : `<div class="vazio"><h2>${t('Texto diário')}</h2><p>${t('Para ver o texto deste dia, baixe o "Examine as Escrituras Diariamente" {a}.', { a: d.getFullYear() })}</p></div>`}</div></div>
+      <button class="seta esq" title="${t('Dia anterior')}">${icone('esq')}</button><button class="seta dir" title="${t('Dia seguinte')}">${icone('dir')}</button>`;
+    c.querySelector('.seta.esq').onclick = () => trocar(-1);
+    c.querySelector('.seta.dir').onclick = () => trocar(1);
+    c.querySelector('.documento')?.addEventListener('click', async (ev) => { const a = ev.target.closest('a'); if (a) { ev.preventDefault(); } });
+  },
   audiobiblia(c, e) { return Midia.biblia(c, e); },
 
   selecao(c) {

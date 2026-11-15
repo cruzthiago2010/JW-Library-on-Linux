@@ -2020,7 +2020,7 @@ dependencies = [
 
 [[package]]
 name = "leitor-baixar"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "flate2",
  "leitor-nucleo",
@@ -2034,7 +2034,7 @@ dependencies = [
 
 [[package]]
 name = "leitor-jw"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "flate2",
  "leitor-baixar",
@@ -2050,7 +2050,7 @@ dependencies = [
 
 [[package]]
 name = "leitor-nucleo"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "aes",
  "cbc",

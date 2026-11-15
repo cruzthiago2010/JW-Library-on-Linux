@@ -435,6 +435,28 @@ fn nomes_dos_livros() -> Vec<&'static str> {
     (1..=66).map(biblia::nome).collect()
 }
 
+#[derive(serde::Serialize)]
+struct TextoDiario {
+    texto: Option<jwpub::TextoDoDia>,
+    /// O símbolo do Examine que falta baixar (es26), se não há texto.
+    falta: Option<String>,
+}
+
+/// O texto diário de `dia` (AAAAMMDD) na língua da Biblioteca (código do jw.org).
+#[tauri::command]
+async fn texto_diario(app: tauri::AppHandle, lingua: String, dia: i64) -> Result<TextoDiario, String> {
+    let raiz = raiz(&app);
+    let dados = app.state::<Estado>().dados.join("baixar");
+    tauri::async_runtime::spawn_blocking(move || {
+        let meps = leitor_baixar::catalogo_jw::meps_de_em(&dados, &lingua).unwrap_or(5);
+        let texto = jwpub::texto_diario(&raiz, meps, dia);
+        let falta = texto.is_none().then(|| format!("es{:02}", (dia / 10000) % 100));
+        Ok(TextoDiario { texto, falta })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// O idioma da interface ("pt" ou "en"), escolhido na janela.
 #[tauri::command]
 fn definir_idioma(idioma: String) {
@@ -540,21 +562,30 @@ pub fn run() {
     tauri::Builder::default()
         // Uma janela só: abrir de novo (por exemplo, pelo endereço
         // jw-library-linux://abrir vindo do baixador) traz a janela aberta para a frente.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _pasta| {
-            if let Some(janela) = app.get_webview_window("main") {
-                let _ = janela.unminimize();
-                let _ = janela.show();
-                let _ = janela.set_focus();
-            }
-        }))
+        .plugin(
+            tauri_plugin_single_instance::Builder::new()
+                // O nome no D-Bus dentro do espaço do ID do app (exigência do Flatpak/Flathub).
+                .dbus_id("io.github.cruzthiago2010.JW-Library-on-Linux")
+                .callback(|app, _args, _pasta| {
+                    if let Some(janela) = app.get_webview_window("main") {
+                        let _ = janela.unminimize();
+                        let _ = janela.show();
+                        let _ = janela.set_focus();
+                    }
+                })
+                .build(),
+        )
         .plugin(tauri_plugin_dialog::init())
         .register_uri_scheme_protocol("conteudo", servir)
         .setup(|app| {
             // No Flatpak a pasta de dados seria ~/.var/app/<id>/…; usamos a mesma do
             // AppImage (~/.local/share/io.github.leitorjw, liberada no manifesto),
             // para as publicações e os grifos valerem nos dois e no baixador.
-            let dados = match (std::env::var_os("FLATPAK_ID"), std::env::var_os("HOME")) {
-                (Some(_), Some(casa)) => PathBuf::from(casa).join(".local/share").join(&app.config().identifier),
+            // Se o Flatpak não tem essa permissão (o do Flathub), a pasta não aparece
+            // no sandbox e ficam os dados do próprio sandbox.
+            let compartilhada = std::env::var_os("HOME").map(|casa| PathBuf::from(casa).join(".local/share").join(&app.config().identifier));
+            let dados = match (std::env::var_os("FLATPAK_ID"), compartilhada) {
+                (Some(_), Some(pasta)) if pasta.is_dir() => pasta,
                 _ => app.path().app_data_dir()?,
             };
             let raiz = dados.join("biblioteca");
@@ -573,7 +604,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, baixar::baixar_catalogo, baixar::baixar_selecao, baixar::baixar_escolher, baixar::baixar_tirar, baixar::baixar_sincronizar, baixar::baixar_atualizar, baixar::baixar_ocupado, baixar::baixar_procurar, baixar::baixar_opcoes, baixar::baixar_atualizar_sozinho, baixar::catalogo_info, baixar::catalogo_atualizar, baixar::catalogo_categorias, baixar::catalogo_anos, baixar::catalogo_publicacoes, baixar::baixar_publicacao, baixar::linguas_jw, baixar::catalogo_adicionar_lingua, midia::midia_categoria, midia::midia_biblia, midia::midia_baixadas, midia::midia_baixar, midia::midia_apagar, midia::midia_abrir_fora, midia::midia_base, midia::midia_buscar, midia::midia_item, midia::noticias, midia::abrir_link, nomes_dos_livros, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
+            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, baixar::baixar_catalogo, baixar::baixar_selecao, baixar::baixar_escolher, baixar::baixar_tirar, baixar::baixar_sincronizar, baixar::baixar_atualizar, baixar::baixar_ocupado, baixar::baixar_procurar, baixar::baixar_opcoes, baixar::baixar_atualizar_sozinho, baixar::catalogo_info, baixar::catalogo_atualizar, baixar::catalogo_categorias, baixar::catalogo_anos, baixar::catalogo_publicacoes, baixar::baixar_publicacao, baixar::linguas_jw, baixar::catalogo_adicionar_lingua, midia::midia_categoria, midia::midia_biblia, midia::midia_baixadas, midia::midia_baixar, midia::midia_apagar, midia::midia_abrir_fora, midia::midia_base, midia::midia_buscar, midia::midia_item, midia::noticias, midia::abrir_link, nomes_dos_livros, texto_diario, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

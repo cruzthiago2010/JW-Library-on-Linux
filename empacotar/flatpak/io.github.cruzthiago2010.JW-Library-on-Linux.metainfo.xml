@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.cruzthiago2010.JW-Library-on-Linux</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>JW Library on Linux</name>
+  <summary>Read .jwpub publications offline</summary>
+  <summary xml:lang="pt-BR">Leia publicações .jwpub sem internet</summary>
+  <developer id="io.github.cruzthiago2010"><name>Thiago Monteiro Cruz</name></developer>
+  <description>
+    <p>A community-made reader for .jwpub publication files, in the style of JW Library for Windows. It works offline with the files you import. Not an official app and not affiliated with the publishers.</p>
+    <ul>
+      <li>Library by category, Bible with study notes and search, meetings of the week</li>
+      <li>Highlights in six colors, notes with tags and bookmarks</li>
+      <li>Library like JW Library: every publication of the jw.org catalog, one-click download, new issues and updates</li>
+      <li>Video and Audio tabs: watch and listen, download for offline use, audio Bible</li>
+      <li>Backup in the same .jwlibrary format used on phones</li>
+      <li>English and Brazilian Portuguese interface</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.cruzthiago2010.JW-Library-on-Linux.desktop</launchable>
+  <url type="homepage">https://github.com/cruzthiago2010/JW-Library-on-Linux</url>
+  <url type="bugtracker">https://github.com/cruzthiago2010/JW-Library-on-Linux/issues</url>
+  <screenshots>
+    <screenshot type="default"><caption>Bible chapter with highlights, a note and the study panel</caption><image>https://raw.githubusercontent.com/cruzthiago2010/JW-Library-on-Linux/main/docs/screenshots/biblia.jpg</image></screenshot>
+    <screenshot><caption>Library with every category and one-click downloads</caption><image>https://raw.githubusercontent.com/cruzthiago2010/JW-Library-on-Linux/main/docs/screenshots/biblioteca-livros.jpg</image></screenshot>
+    <screenshot><caption>Video tab</caption><image>https://raw.githubusercontent.com/cruzthiago2010/JW-Library-on-Linux/main/docs/screenshots/video.jpg</image></screenshot>
+    <screenshot><caption>Daily text on Home</caption><image>https://raw.githubusercontent.com/cruzthiago2010/JW-Library-on-Linux/main/docs/screenshots/texto-diario.jpg</image></screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <branding>
+    <color type="primary" scheme_preference="light">#b6a7ec</color>
+    <color type="primary" scheme_preference="dark">#3b2f63</color>
+  </branding>
+  <requires><display_length compare="ge">720</display_length></requires>
+  <supports><control>pointing</control><control>keyboard</control></supports>
+  <releases>
+    <release version="0.8.0" date="2026-11-15"><description><p>Daily text on Home with day arrows; download "Examining the Scriptures Daily" from the card.</p></description></release>
+    <release version="0.7.0" date="2026-11-15"><description><p>News on Home, offline video and audio catalog with search, and every jw.org language.</p></description></release>
+    <release version="0.6.0" date="2026-11-15"><description><p>Library like JW Library with the whole catalog, plus Video and Audio tabs.</p></description></release>
+    <release version="0.5.0" date="2026-11-15"><description><p>Built-in downloader with automatic updates.</p></description></release>
+  </releases>
+</component>

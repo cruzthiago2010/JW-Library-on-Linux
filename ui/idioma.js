@@ -121,6 +121,13 @@ const EN = {
   '{n} ocorrências': '{n} results',
   ' (mostrando {n})': ' (showing {n})',
   // Biblioteca
+  'Dia anterior': 'Previous day',
+  'Dia seguinte': 'Next day',
+  'Para ver o texto deste dia, baixe o "Examine as Escrituras Diariamente" {a}.': 'To see this day\'s text, download "Examining the Scriptures Daily" {a}.',
+  'Texto diário': 'Daily text',
+  'Abrir no Examine': 'Open in Examining the Scriptures',
+  'Para ver o texto de hoje, baixe o "Examine as Escrituras Diariamente" deste ano.': 'To see today\'s text, download this year\'s "Examining the Scriptures Daily".',
+  'Baixar o Examine': 'Download Examining the Scriptures',
   'Nenhuma publicação para ler neste idioma': 'No publications to read in this language',
   'O catálogo do jw.org não tem publicações .jwpub neste idioma. Veja as abas VÍDEO e ÁUDIO.': 'The jw.org catalog has no .jwpub publications in this language. See the VIDEO and AUDIO tabs.',
   'Buscar idioma': 'Search language',

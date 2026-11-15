@@ -179,7 +179,7 @@ const BibliotecaJW = (() => {
       const tinha = Object.keys(baixando).length;
       for (const k of Object.keys(baixando)) delete baixando[k];
       if (tinha && payload.desfechos?.some((d) => d.Erro)) aviso(t('Não deu para baixar: {x}', { x: payload.desfechos.find((d) => d.Erro).Erro[1] }), 8000);
-      if (tinha) carregarBiblioteca().then(() => { const p = pilhas[secao]; if (['categoria', 'biblioteca'].includes(p[p.length - 1].tela)) desenhar(); });
+      carregarBiblioteca().then(() => { const p = pilhas[secao]; if (['categoria', 'biblioteca', 'inicio'].includes(p[p.length - 1].tela)) desenhar(); });
     });
     ouvir('catalogo-progresso', ({ payload }) => {
       const el = document.getElementById('pct-catalogo');

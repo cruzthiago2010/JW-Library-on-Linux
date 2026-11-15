@@ -19,6 +19,7 @@
 | ![Video tab](docs/screenshots/video.jpg) | ![Playing a video](docs/screenshots/video-tocando.jpg) |
 | ![Audio tab](docs/screenshots/audio.jpg) | ![Audio Bible](docs/screenshots/audio-biblia.jpg) |
 | ![News on Home](docs/screenshots/noticias.jpg) | ![Video search](docs/screenshots/video-busca.jpg) |
+| ![Daily text on Home](docs/screenshots/texto-diario.jpg) | ![All jw.org languages](docs/screenshots/idiomas.jpg) |
 
 ![Dark theme](docs/screenshots/escuro.jpg)
 
@@ -50,6 +51,7 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
   download new issues of the magazines and workbooks you choose (formerly the separate Downloader).
 - **Video and Audio** tabs: jw.org categories, watch and listen inside the app, download for offline
   use, the **audio Bible** and search by title (works offline).
+- **Daily text** on Home with day arrows (downloads "Examining the Scriptures Daily" if missing).
 - **News** banner on Home, like JW Library, and **every jw.org language** (over a thousand, including
   sign languages) for publications, video and audio.
 - **Search** across all imported publications, and delete publications from the library.
@@ -63,8 +65,8 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
 
 Download from the [Releases](../../releases/latest) page:
 
-- **Flatpak** (any distribution): `flatpak install --user JW_Library_on_Linux-0.7.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Needs Flatpak with the Flathub remote.
-- **AppImage**: make `JW_Library_on_Linux-0.7.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) executable and run it.
+- **Flatpak** (any distribution): `flatpak install --user JW_Library_on_Linux-0.8.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Needs Flatpak with the Flathub remote.
+- **AppImage**: make `JW_Library_on_Linux-0.8.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) executable and run it.
 
 📖 **[Where to put your .jwpub files and how to import them](docs/PUBLICACOES.md#english)**
 
@@ -77,7 +79,7 @@ publications and `userData.db` with highlights and notes, in JW Library's format
 cargo test -p leitor-nucleo
 cargo run -p leitor-jw
 cd app && cargo tauri build --bundles appimage
-flatpak-builder --user --install --force-clean compilacao empacotar/flatpak/io.github.cruzthiago2010.JWLibraryOnLinux.yml
+flatpak-builder --user --install --force-clean compilacao empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.yml
 ```
 
 Requires `libwebkit2gtk-4.1-dev`, `librsvg2-dev`, `pkg-config` and `libssl-dev`.
@@ -119,6 +121,7 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
   automáticas** baixam as edições novas das revistas e apostilas que você escolher (o antigo Baixador).
 - Abas **Vídeo e Áudio**: categorias do jw.org, assistir e ouvir no app, baixar para ver sem internet
   a **Bíblia em áudio** e busca por nome (funciona sem internet).
+- **Texto diário** no Início, com setas de dia (baixa o "Examine" se faltar).
 - **Notícias** no Início, como no JW Library, e **todos os idiomas do jw.org** (mais de mil, inclusive
   línguas de sinais) para publicações, vídeos e áudios.
 - **Busca** em todas as publicações importadas, e excluir publicações da biblioteca.
@@ -130,8 +133,8 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
 
 ### Instalar
 
-- **Flatpak** (qualquer distribuição): `flatpak install --user JW_Library_on_Linux-0.7.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Precisa do Flatpak com o Flathub configurado.
-- **AppImage**: dê permissão de execução ao `JW_Library_on_Linux-0.7.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) e abra.
+- **Flatpak** (qualquer distribuição): `flatpak install --user JW_Library_on_Linux-0.8.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Precisa do Flatpak com o Flathub configurado.
+- **AppImage**: dê permissão de execução ao `JW_Library_on_Linux-0.8.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) e abra.
 
 📖 **[Onde ficam os arquivos .jwpub e como importar](docs/PUBLICACOES.md#português)**
 
@@ -157,7 +160,7 @@ Os dados ficam em `~/.local/share/io.github.leitorjw/` (`biblioteca/` com as pub
 cargo test -p leitor-nucleo          # LEITOR_BIBLIOTECA=data/biblioteca LEITOR_BACKUP=<arquivo.jwlibrary> para testar com dados reais
 cargo run -p leitor-jw
 cd app && cargo tauri build --bundles appimage   # AppImage (precisa de ~3 GB livres)
-flatpak-builder --user --install --force-clean compilacao empacotar/flatpak/io.github.cruzthiago2010.JWLibraryOnLinux.yml   # Flatpak
+flatpak-builder --user --install --force-clean compilacao empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.yml   # Flatpak
 ```
 
 Precisa de `libwebkit2gtk-4.1-dev`, `librsvg2-dev`, `pkg-config` e `libssl-dev`.

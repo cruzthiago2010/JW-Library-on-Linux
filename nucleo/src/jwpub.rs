@@ -448,3 +448,32 @@ mod testes {
         assert_eq!(nome_seguro("x\\y.png").as_deref(), Some("y.png"));
     }
 }
+
+/// O texto de um dia num "Examine as Escrituras Diariamente" (`DatedText`).
+#[derive(serde::Serialize, Debug)]
+pub struct TextoDoDia {
+    pub pasta: String,
+    pub documento: i64,
+    pub data: String,
+    pub html: String,
+}
+
+impl Publicacao {
+    /// O texto da data `dia` (AAAAMMDD), se esta publicação tiver.
+    pub fn texto_do_dia(&self, dia: i64) -> Option<TextoDoDia> {
+        let conexao = self.banco_publico().ok()?;
+        let (documento, legenda, bruto): (i64, Option<String>, Vec<u8>) = conexao
+            .query_row(
+                "SELECT DocumentId, Caption, Content FROM DatedText WHERE FirstDateOffset <= ?1 AND LastDateOffset >= ?1 LIMIT 1",
+                [dia],
+                |l| Ok((l.get(0)?, l.get(1)?, l.get(2)?)),
+            )
+            .ok()?;
+        Some(TextoDoDia { pasta: self.pasta.clone(), documento, data: legenda.unwrap_or_default(), html: self.claro(&bruto).ok()? })
+    }
+}
+
+/// O Examine instalado na língua `lingua` (MEPS) que tem o texto de `dia`.
+pub fn texto_diario(raiz: &Path, lingua: i64, dia: i64) -> Option<TextoDoDia> {
+    instaladas(raiz).into_iter().filter(|p| p.sigla == "es" && p.lingua == lingua).find_map(|p| p.texto_do_dia(dia))
+}

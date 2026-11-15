@@ -60,3 +60,10 @@ fn busca_nas_publicacoes() {
     println!("{total} achados; 1º: {} — {} — {}", achados[0].titulo, achados[0].publicacao, achados[0].trecho);
     let _ = std::fs::remove_file(indice);
 }
+
+#[test]
+fn texto_diario_do_examine() {
+    let Ok(pasta) = std::env::var("LEITOR_ES") else { return };
+    let t = leitor_nucleo::jwpub::texto_diario(std::path::Path::new(&pasta), 5, 20261115).expect("texto de 15/11/2026");
+    println!("{} | {}", t.data, &t.html[..t.html.len().min(400)]);
+}

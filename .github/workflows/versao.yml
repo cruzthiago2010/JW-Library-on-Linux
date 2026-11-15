@@ -74,7 +74,7 @@ jobs:
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: JW_Library_on_Linux-${{ steps.v.outputs.v }}-${{ matrix.arq }}.flatpak
-          manifest-path: empacotar/flatpak/io.github.cruzthiago2010.JWLibraryOnLinux.yml
+          manifest-path: empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.yml
           arch: ${{ matrix.arq }}
           cache-key: flatpak-${{ matrix.arq }}-${{ github.sha }}
           upload-artifact: true

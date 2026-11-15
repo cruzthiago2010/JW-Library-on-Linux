@@ -1,8 +1,8 @@
 # Flatpak do JW Library on Linux. Compilar e instalar só para o usuário:
-#   flatpak-builder --user --install --force-clean compilacao empacotar/flatpak/io.github.cruzthiago2010.JWLibraryOnLinux.yml
+#   flatpak-builder --user --install --force-clean compilacao empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.yml
 # Gerar o arquivo .flatpak para a página de versões:
-#   flatpak build-bundle ~/.local/share/flatpak/repo JW_Library_on_Linux.flatpak io.github.cruzthiago2010.JWLibraryOnLinux
-id: io.github.cruzthiago2010.JWLibraryOnLinux
+#   flatpak build-bundle ~/.local/share/flatpak/repo JW_Library_on_Linux.flatpak io.github.cruzthiago2010.JW-Library-on-Linux
+id: io.github.cruzthiago2010.JW-Library-on-Linux
 runtime: org.gnome.Platform
 runtime-version: '49'
 sdk: org.gnome.Sdk
@@ -20,8 +20,6 @@ finish-args:
   - --filesystem=xdg-data/io.github.leitorjw:create
   # Para o aviso de arquivos .jwpub novos em Downloads.
   - --filesystem=xdg-download:ro
-  # Instância única (tauri-plugin-single-instance usa este nome no D-Bus).
-  - --own-name=io.github.leitorjw.SingleInstance
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin
 modules:
@@ -37,11 +35,11 @@ modules:
     build-commands:
       - cargo build --release --locked -p leitor-jw --features tauri/custom-protocol
       - install -Dm755 target/release/leitor-jw /app/bin/leitor-jw
-      - install -Dm644 empacotar/flatpak/io.github.cruzthiago2010.JWLibraryOnLinux.desktop /app/share/applications/io.github.cruzthiago2010.JWLibraryOnLinux.desktop
-      - install -Dm644 empacotar/flatpak/io.github.cruzthiago2010.JWLibraryOnLinux.metainfo.xml /app/share/metainfo/io.github.cruzthiago2010.JWLibraryOnLinux.metainfo.xml
-      - install -Dm644 app/icons/icone.svg /app/share/icons/hicolor/scalable/apps/io.github.cruzthiago2010.JWLibraryOnLinux.svg
-      - install -Dm644 app/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.cruzthiago2010.JWLibraryOnLinux.png
-      - install -Dm644 app/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.github.cruzthiago2010.JWLibraryOnLinux.png
+      - install -Dm644 empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.desktop /app/share/applications/io.github.cruzthiago2010.JW-Library-on-Linux.desktop
+      - install -Dm644 empacotar/flatpak/io.github.cruzthiago2010.JW-Library-on-Linux.metainfo.xml /app/share/metainfo/io.github.cruzthiago2010.JW-Library-on-Linux.metainfo.xml
+      - install -Dm644 app/icons/icone.svg /app/share/icons/hicolor/scalable/apps/io.github.cruzthiago2010.JW-Library-on-Linux.svg
+      - install -Dm644 app/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.cruzthiago2010.JW-Library-on-Linux.png
+      - install -Dm644 app/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.github.cruzthiago2010.JW-Library-on-Linux.png
     sources:
       - type: dir
         path: ../..
