@@ -3,6 +3,7 @@ name = "leitor-jw"
 version = "0.1.0"
 description = "Leitor de publicações .jwpub no estilo do JW Library, para Linux"
 edition = "2021"
+license = "GPL-3.0-or-later"
 
 [lib]
 name = "leitor_jw_lib"

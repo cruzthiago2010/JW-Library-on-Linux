@@ -24,30 +24,38 @@ CSS do JW Library: o visual das publicações vem de um CSS próprio (`ui/estilo
 ## Instalar
 
 - Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.0_amd64.deb`
-- Outras distribuições: dê permissão de execução ao `Leitor JW_0.1.0_amd64.AppImage` e abra.
+- Outras distribuições: dê permissão de execução ao `Leitor_JW-0.1.0-x86_64.AppImage` e abra.
 
 Os dados ficam em `~/.local/share/io.github.leitorjw/` (`biblioteca/` com as publicações e
 `userData.db` com grifos e notas, no formato do JW Library).
 
 ## Pastas do código
 
-- `nucleo/` — sem Tauri, testável: `.jwpub` (`jwpub.rs`, copiado do app Reuniões nativo), Biblioteca
+- `nucleo/` — sem Tauri, testável: `.jwpub` (`jwpub.rs`), Biblioteca
   (`biblioteca.rs`), leitor (`leitor.rs`), painel (`estudo.rs`), Reuniões (`reunioes.rs`), Bíblia e
   busca (`biblia.rs`, `busca.rs`), estudo pessoal (`pessoal.rs` + `userdata.sql`, o esquema v16 do
   JW Library), tokens dos grifos (`tokens.rs`) e backup (`backup.rs`).
 - `app/` — a casca Tauri 2 (comandos e o protocolo `conteudo://` das imagens).
 - `ui/` — a janela (HTML/CSS/JS puro). `marcas.js` pinta os grifos com a API de destaques do CSS.
 - `ferramentas/` — `gerar_css.py` (gera `ui/estilo/utilidades.css`) e `print.sh` (prints numa tela virtual).
-- `docs/` — plano por etapas e inventário das telas do JW Library.
+- `docs/` — inventário das telas do JW Library usado como referência de desenho.
 
 ## Compilar
 
 ```bash
-# No PC do Thiago: reaproveita a compilação do app nativo e poupa disco.
-export CARGO_TARGET_DIR="$HOME/Documents/Aplicativo Thiago/nativo/target" CARGO_INCREMENTAL=0
 cargo test -p leitor-nucleo          # LEITOR_BIBLIOTECA=data/biblioteca LEITOR_BACKUP=<arquivo.jwlibrary> para testar com dados reais
 cargo run -p leitor-jw
 cd app && cargo tauri build --bundles deb,appimage   # pacotes (precisa de ~3 GB livres)
 ```
 
 Precisa de `libwebkit2gtk-4.1-dev`, `librsvg2-dev`, `pkg-config` e `libssl-dev`.
+
+## Aviso
+
+Este é um projeto independente, feito por voluntários, **sem nenhuma ligação** com a Watch Tower
+Bible and Tract Society nem com o JW Library. Nenhuma publicação acompanha o app: ele só abre
+arquivos `.jwpub` que você mesmo já tem. Os nomes citados pertencem aos seus donos.
+
+## Licença
+
+GPL-3.0-or-later (veja `LICENSE`).
