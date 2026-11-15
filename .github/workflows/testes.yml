@@ -1,0 +1,14 @@
+# Testes do núcleo a cada envio para a main e em cada pull request.
+name: Testes
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  testes:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p leitor-nucleo
