@@ -1,4 +1,4 @@
-# Leitor JW (para Linux)
+# JW Library for Linux (Leitor JW)
 
 Leitor de publicações `.jwpub` no estilo do JW Library do Windows, para quem usa Linux.
 Funciona sem internet: você importa os arquivos `.jwpub` que já tem (baixados no jw.org ou copiados
