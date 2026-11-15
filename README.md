@@ -1,6 +1,12 @@
-# JW Library on Linux
+<p align="center"><img src="docs/marca/capa.png" alt="JW Library on Linux" width="100%"></p>
 
-**[English](#english) · [Português](#português)**
+<p align="center">
+  <a href="../../releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/cruzthiago2010/JW-Library-on-Linux?label=download&color=5b4a92"></a>
+  <img alt="Linux x86_64" src="https://img.shields.io/badge/Linux-x86__64-2f2552">
+  <img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-6cc456">
+</p>
+
+<p align="center"><b><a href="#english">English</a> · <a href="#português">Português</a></b></p>
 
 ![Bible chapter with highlights, a personal note and the study notes panel](docs/screenshots/biblia.jpg)
 
@@ -42,8 +48,8 @@ The interface is currently in Brazilian Portuguese; it opens publications in any
 
 Download from the [Releases](../../releases/latest) page:
 
-- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.1_amd64.deb`
-- Other distributions: make `JW_Library_on_Linux-0.1.1-x86_64.AppImage` executable and run it.
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.2_amd64.deb`
+- Other distributions: make `JW_Library_on_Linux-0.1.2-x86_64.AppImage` executable and run it.
 
 64-bit (x86_64) only. Data lives in `~/.local/share/io.github.leitorjw/` (`biblioteca/` with the
 publications and `userData.db` with highlights and notes, in JW Library's format).
@@ -96,8 +102,8 @@ CSS do JW Library: o visual das publicações vem de um CSS próprio (`ui/estilo
 
 ### Instalar
 
-- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.1_amd64.deb`
-- Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.1.1-x86_64.AppImage` e abra.
+- Debian, Ubuntu, Mint: `sudo apt install ./leitor-jw_0.1.2_amd64.deb`
+- Outras distribuições: dê permissão de execução ao `JW_Library_on_Linux-0.1.2-x86_64.AppImage` e abra.
 
 Os dados ficam em `~/.local/share/io.github.leitorjw/` (`biblioteca/` com as publicações e
 `userData.db` com grifos e notas, no formato do JW Library).

@@ -1,6 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect x="16" y="16" width="480" height="480" rx="104" fill="#4a3b78"/>
-  <path d="M256 150c-40-30-100-38-160-28v236c60-10 120-2 160 28 40-30 100-38 160-28V122c-60-10-120-2-160 28z" fill="#fff"/>
-  <path d="M256 150v236" stroke="#4a3b78" stroke-width="10"/>
-  <path d="M130 190c32-4 62 0 92 12M130 236c32-4 62 0 92 12M130 282c32-4 62 0 92 12M290 202c30-12 60-16 92-12M290 248c30-12 60-16 92-12M290 294c30-12 60-16 92-12" stroke="#b6a7ec" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b4a92"/><stop offset="1" stop-color="#2f2552"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#fundo)"/>
+  <!-- sombra do livro -->
+  <path d="M256 168c-44-30-108-36-164-26v236c56-10 120-4 164 26 44-30 108-36 164-26V142c-56-10-120-4-164 26z" fill="#000" opacity=".18" transform="translate(0 10)"/>
+  <!-- livro aberto -->
+  <path d="M256 160c-44-30-108-36-164-26v236c56-10 120-4 164 26 44-30 108-36 164-26V134c-56-10-120-4-164 26z" fill="#fff"/>
+  <path d="M256 160v236" stroke="#d9d3ee" stroke-width="6"/>
+  <!-- linhas da página esquerda -->
+  <g stroke="#c9c2e3" stroke-width="12" stroke-linecap="round">
+    <path d="M124 196c36-5 70-1 102 10"/><path d="M124 240c36-5 70-1 102 10"/><path d="M124 284c36-5 70-1 102 10"/><path d="M124 328c36-5 70-1 102 10"/>
+  </g>
+  <!-- grifos coloridos na página direita -->
+  <g stroke-linecap="round" stroke-width="22">
+    <path d="M288 204c32-11 64-15 100-11" stroke="#f5cf2e"/>
+    <path d="M288 248c32-11 64-15 100-11" stroke="#6cc456"/>
+    <path d="M288 292c32-11 64-15 100-11" stroke="#4f9cf0"/>
+  </g>
+  <path d="M288 336c32-11 64-15 100-11" stroke="#c9c2e3" stroke-width="12" stroke-linecap="round"/>
+  <!-- fita marcador -->
+  <path d="M370 122v54l15-12 15 12v-58" fill="#e74c3c"/>
 </svg>
