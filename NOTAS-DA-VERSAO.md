@@ -1,3 +1,14 @@
+# JW Library on Linux 0.7.0
+
+- **Notícias no Início**, como no JW Library: a faixa "NOVO VÍDEO | …" com o texto completo ao abrir. / **News banner** on Home.
+- **Vídeos e áudios sem internet e com busca**: o catálogo de mídia do jw.org fica no computador (as abas abrem na hora) e dá para buscar por nome. / Offline media catalog with search.
+- **Todos os idiomas do jw.org** (mais de mil, inclusive línguas de sinais) para publicações, vídeos e áudios, com busca no seletor. / **All jw.org languages**, including sign languages.
+
+## Instalar · Install
+
+- Flatpak: `flatpak install --user JW_Library_on_Linux-0.7.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`)
+- AppImage: `chmod +x JW_Library_on_Linux-0.7.0-x86_64.AppImage` e abra / and run it (ARM: `-aarch64.AppImage`)
+
 # JW Library on Linux 0.6.0
 
 - **Biblioteca igual à do JW Library**: todas as categorias do catálogo do jw.org (Livros, Brochuras, Folhetos, Séries, A Sentinela, Despertai!, Apostilas, Ministério do Reino, Programas…), com capas. As publicações que você não tem aparecem com a nuvem e o tamanho: um clique baixa. Seletor de idioma das publicações. / **Library like JW Library**: the whole jw.org catalog, one-click download.

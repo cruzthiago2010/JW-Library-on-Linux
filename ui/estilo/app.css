@@ -427,3 +427,19 @@ body.soltando #soltar { display: grid; }
 .tocador .erro-tocar { color: #c0392b; font-size: 13px; margin-top: 6px; }
 .sub-abas[hidden] { display: none; }
 .tocador .cab b { flex: 1; min-width: 0; }
+.busca-midia { margin-bottom: 18px; } .resultado-midia:not(:empty) { margin-bottom: 18px; }
+
+/* Faixa de notícias do Início (como a do JW Library). */
+.faixa-noticia { display: flex; align-items: center; margin-bottom: 16px; background: #3a3a40; color: #fff; border-radius: 4px; }
+.faixa-noticia .abrir-noticia { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; color: #fff; text-align: left; font-size: 14px; }
+.faixa-noticia .abrir-noticia svg { width: 18px; height: 18px; flex: none; }
+.faixa-noticia .fechar-faixa { color: #fff; width: 34px; height: 34px; font-size: 18px; }
+.titulo-noticia { font-size: 16px; margin: 0 0 10px; }
+
+/* Seletor de todas as línguas. */
+.busca-lingua { width: 100%; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 4px; background: var(--fundo); color: var(--texto); margin-bottom: 10px; }
+.lista-linguas { max-height: 55vh; overflow: auto; min-width: min(420px, 80vw); }
+.item-lingua { display: flex; flex-direction: column; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; }
+.item-lingua span { font-size: 12px; color: var(--texto-suave); }
+.item-lingua:hover { background: var(--fundo-bloco); }
+.item-lingua.atual { background: color-mix(in srgb, var(--roxo) 15%, transparent); }

@@ -18,6 +18,7 @@
 | ![Library: every category of the jw.org catalog](docs/screenshots/biblioteca-categorias.jpg) | ![Books: installed and to download](docs/screenshots/biblioteca-livros.jpg) |
 | ![Video tab](docs/screenshots/video.jpg) | ![Playing a video](docs/screenshots/video-tocando.jpg) |
 | ![Audio tab](docs/screenshots/audio.jpg) | ![Audio Bible](docs/screenshots/audio-biblia.jpg) |
+| ![News on Home](docs/screenshots/noticias.jpg) | ![Video search](docs/screenshots/video-busca.jpg) |
 
 ![Dark theme](docs/screenshots/escuro.jpg)
 
@@ -48,7 +49,9 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
   ones you don't have show a cloud and their size, and one click downloads them. **Automatic updates**
   download new issues of the magazines and workbooks you choose (formerly the separate Downloader).
 - **Video and Audio** tabs: jw.org categories, watch and listen inside the app, download for offline
-  use, and the **audio Bible**.
+  use, the **audio Bible** and search by title (works offline).
+- **News** banner on Home, like JW Library, and **every jw.org language** (over a thousand, including
+  sign languages) for publications, video and audio.
 - **Search** across all imported publications, and delete publications from the library.
 - **Meetings**: the workbook and the Watchtower study of the week, with week arrows.
 - **Personal Study**: highlights in 6 colors, notes with tags, bookmarks (10 ribbons), answer fields
@@ -60,8 +63,8 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
 
 Download from the [Releases](../../releases/latest) page:
 
-- **Flatpak** (any distribution): `flatpak install --user JW_Library_on_Linux-0.6.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Needs Flatpak with the Flathub remote.
-- **AppImage**: make `JW_Library_on_Linux-0.6.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) executable and run it.
+- **Flatpak** (any distribution): `flatpak install --user JW_Library_on_Linux-0.7.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Needs Flatpak with the Flathub remote.
+- **AppImage**: make `JW_Library_on_Linux-0.7.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) executable and run it.
 
 📖 **[Where to put your .jwpub files and how to import them](docs/PUBLICACOES.md#english)**
 
@@ -115,7 +118,9 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
   capas; as que você não tem mostram a nuvem e o tamanho, e um clique baixa. **Atualizações
   automáticas** baixam as edições novas das revistas e apostilas que você escolher (o antigo Baixador).
 - Abas **Vídeo e Áudio**: categorias do jw.org, assistir e ouvir no app, baixar para ver sem internet
-  e a **Bíblia em áudio**.
+  a **Bíblia em áudio** e busca por nome (funciona sem internet).
+- **Notícias** no Início, como no JW Library, e **todos os idiomas do jw.org** (mais de mil, inclusive
+  línguas de sinais) para publicações, vídeos e áudios.
 - **Busca** em todas as publicações importadas, e excluir publicações da biblioteca.
 - **Reuniões**: a apostila e o estudo de A Sentinela da semana, com setas de semana.
 - **Estudo Pessoal**: grifos em 6 cores, notas com etiquetas, marcadores (10 fitas), campos de
@@ -125,8 +130,8 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
 
 ### Instalar
 
-- **Flatpak** (qualquer distribuição): `flatpak install --user JW_Library_on_Linux-0.6.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Precisa do Flatpak com o Flathub configurado.
-- **AppImage**: dê permissão de execução ao `JW_Library_on_Linux-0.6.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) e abra.
+- **Flatpak** (qualquer distribuição): `flatpak install --user JW_Library_on_Linux-0.7.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Precisa do Flatpak com o Flathub configurado.
+- **AppImage**: dê permissão de execução ao `JW_Library_on_Linux-0.7.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) e abra.
 
 📖 **[Onde ficam os arquivos .jwpub e como importar](docs/PUBLICACOES.md#português)**
 

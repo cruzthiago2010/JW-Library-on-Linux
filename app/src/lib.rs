@@ -566,13 +566,14 @@ pub fn run() {
                 app.manage(servidor);
             }
             app.manage(estado_midia);
+            app.manage(midia::CacheMidia::default());
             app.manage(Estado { raiz, dados, pessoal: Mutex::new(pessoal) });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, baixar::baixar_catalogo, baixar::baixar_selecao, baixar::baixar_escolher, baixar::baixar_tirar, baixar::baixar_sincronizar, baixar::baixar_atualizar, baixar::baixar_ocupado, baixar::baixar_procurar, baixar::baixar_opcoes, baixar::baixar_atualizar_sozinho, baixar::catalogo_info, baixar::catalogo_atualizar, baixar::catalogo_categorias, baixar::catalogo_anos, baixar::catalogo_publicacoes, baixar::baixar_publicacao, midia::midia_categoria, midia::midia_biblia, midia::midia_baixadas, midia::midia_baixar, midia::midia_apagar, midia::midia_abrir_fora, midia::midia_base, nomes_dos_livros, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
+            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, baixar::baixar_catalogo, baixar::baixar_selecao, baixar::baixar_escolher, baixar::baixar_tirar, baixar::baixar_sincronizar, baixar::baixar_atualizar, baixar::baixar_ocupado, baixar::baixar_procurar, baixar::baixar_opcoes, baixar::baixar_atualizar_sozinho, baixar::catalogo_info, baixar::catalogo_atualizar, baixar::catalogo_categorias, baixar::catalogo_anos, baixar::catalogo_publicacoes, baixar::baixar_publicacao, baixar::linguas_jw, baixar::catalogo_adicionar_lingua, midia::midia_categoria, midia::midia_biblia, midia::midia_baixadas, midia::midia_baixar, midia::midia_apagar, midia::midia_abrir_fora, midia::midia_base, midia::midia_buscar, midia::midia_item, midia::noticias, midia::abrir_link, nomes_dos_livros, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

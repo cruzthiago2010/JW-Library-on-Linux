@@ -40,11 +40,48 @@ const Midia = (() => {
     catch (erro) { lugar.innerHTML = `<div class="vazio"><h2>${t('Sem conexão com o jw.org')}</h2><p>${esc(erro)}</p></div>${secaoBaixadas(aba)}`; ligarBaixadas(lugar); return; }
     const subs = cat.subcategories || [];
     const extra = aba === 'audio' ? `<button class="azulejo-midia" data-biblia="1"><div class="img biblia-audio">${icone('biblia')}</div><span>${t('Bíblia em áudio')}</span></button>` : '';
-    lugar.innerHTML = `${secaoBaixadas(aba)}<div class="grade-midia">${extra}${subs.map((s) =>
+    lugar.innerHTML = `<form class="campo-busca busca-midia"><input type="search" placeholder="${t(aba === 'video' ? 'Buscar vídeos' : 'Buscar áudios')}"><button class="botao">${t('Buscar')}</button></form>
+      <div class="resultado-midia"></div>${secaoBaixadas(aba)}<div class="grade-midia">${extra}${subs.map((s) =>
       `<button class="azulejo-midia" data-chave="${esc(s.key)}">${imagem(s) ? `<img src="${esc(imagem(s))}" alt="" loading="lazy">` : `<div class="img">${icone(aba)}</div>`}<span>${esc(s.name)}</span></button>`).join('')}</div>`;
     lugar.querySelectorAll('[data-chave]').forEach((b) => (b.onclick = () => abrir({ tela: 'midia', aba, chave: b.dataset.chave })));
     lugar.querySelector('[data-biblia]')?.addEventListener('click', () => abrir({ tela: 'audiobiblia' }));
     ligarBaixadas(lugar);
+    const form = lugar.querySelector('.busca-midia');
+    form.onsubmit = async (ev) => {
+      ev.preventDefault();
+      const termos = form.querySelector('input').value.trim();
+      const r = lugar.querySelector('.resultado-midia');
+      if (!termos) { r.innerHTML = ''; return; }
+      r.innerHTML = `<p class="vazio">${t('Buscando…')}</p>`;
+      try {
+        const lista = await chamar('midia_buscar', { lingua: lingua(), termos, tipo: aba });
+        r.innerHTML = lista.length ? `<div class="secao-titulo">${t(lista.length === 1 ? '{n} ocorrência' : '{n} ocorrências', { n: lista.length })}</div><div class="grade-midia">${lista.map((x) => cartaoMidia(x)).join('')}</div>`
+          : `<p class="vazio">${t('Nada encontrado.')}</p>`;
+        ligarCartoes(r, lista);
+      } catch (erro) { r.innerHTML = `<p class="vazio">${esc(erro)}</p>`; }
+    };
+  }
+
+  // Os itens do catálogo local não trazem os arquivos: vêm da API na hora.
+  async function completar(x) {
+    if ((x.files || []).length) return x;
+    const chave = x.languageAgnosticNaturalKey || x.guid;
+    const novo = await chamar('midia_item', { lingua: lingua(), chave });
+    x.files = novo.files || [];
+    return x;
+  }
+  function ligarCartoes(raiz, lista) {
+    raiz.querySelectorAll('.cartao-midia[data-guid]').forEach((b) => (b.onclick = async (ev) => {
+      const baixar_ = !!ev.target.closest('[data-baixar]');
+      let x = lista.find((y) => y.guid === b.dataset.guid);
+      const local = baixadas.find((y) => y.titulo === x.title);
+      if (local && !baixar_) return tocar({ titulo: local.titulo, imagem: local.imagem, tipo: local.tipo, local: local.nome });
+      try { x = await completar(x); } catch (erro) { return aviso(String(erro), 6000); }
+      const arq = arquivoDe(x);
+      if (!arq) return aviso(t('Este item não tem arquivo para tocar.'));
+      if (baixar_) return baixar(x, arq);
+      tocar({ titulo: x.title, imagem: imagem(x), tipo: arq.tipo, url: arq.url, local: baixada(arq.url)?.nome, x, arq });
+    }));
   }
 
   function secaoBaixadas(aba) {
@@ -83,27 +120,20 @@ const Midia = (() => {
     c.innerHTML = html + '</div>';
     const todos = [...midias, ...subs.flatMap((s) => s.media || [])];
     c.querySelectorAll('[data-sub]').forEach((b) => (b.onclick = () => abrir({ tela: 'midia', aba: e.aba, chave: b.dataset.sub })));
-    c.querySelectorAll('.cartao-midia[data-guid]').forEach((b) => (b.onclick = (ev) => {
-      const x = todos.find((y) => y.guid === b.dataset.guid);
-      const arq = arquivoDe(x);
-      if (!arq) return aviso(t('Este item não tem arquivo para tocar.'));
-      const ja = baixada(arq.url);
-      if (ev.target.closest('[data-baixar]')) return baixar(x, arq);
-      tocar({ titulo: x.title, imagem: imagem(x), tipo: arq.tipo, url: arq.url, local: ja?.nome, x, arq });
-    }));
+    ligarCartoes(c, todos);
   }
 
   function cartaoMidia(x) {
     const arq = arquivoDe(x);
-    const ja = arq && baixada(arq.url);
-    const prog = arq && progresso[nomeDoArquivo(arq.url)];
+    const ja = (arq && baixada(arq.url)) || baixadas.find((b) => b.titulo === x.title);
+    const prog = arq ? progresso[nomeDoArquivo(arq.url)] : progresso['t:' + x.title];
     return `<button class="cartao-midia" data-guid="${esc(x.guid)}">
       ${imagem(x) ? `<img src="${esc(imagem(x))}" alt="" loading="lazy">` : '<div class="img"></div>'}
       ${x.durationFormattedMinSec ? `<span class="duracao">${esc(x.durationFormattedMinSec)}</span>` : ''}
       <div class="t">${esc(x.title)}</div>
       ${prog ? `<div class="barrinha"><div style="width:${prog.total ? Math.round(prog.feito * 100 / prog.total) : 2}%"></div></div>`
         : ja ? `<div class="m">✓ ${t('Baixado')}</div>`
-        : arq ? `<div class="m"><span class="nuvem-baixar" data-baixar="1" title="${t('Baixar para ver sem internet')}">${icone('nuvem')} ${megas(arq.tamanho || 0)}</span></div>` : ''}
+        : `<div class="m"><span class="nuvem-baixar" data-baixar="1" title="${t('Baixar para ver sem internet')}">${icone('nuvem')}${arq ? ` ${megas(arq.tamanho || 0)}` : ''}</span></div>`}
     </button>`;
   }
 

@@ -44,11 +44,14 @@ async fn fundo<T: Send + 'static>(f: impl FnOnce() -> Result<T, String> + Send +
 /// Uma categoria do jw.org (com as subcategorias e os vídeos/áudios). A janela
 /// recebe o JSON como vem.
 #[tauri::command]
-pub async fn midia_categoria(lingua: String, chave: String) -> Result<serde_json::Value, String> {
+pub async fn midia_categoria(app: tauri::AppHandle, lingua: String, chave: String) -> Result<serde_json::Value, String> {
     if !so_codigo(&lingua) || !so_codigo(&chave) {
         return Err("categoria inválida".into());
     }
     fundo(move || {
+        if let Some(v) = categoria_local(&app, &lingua, &chave) {
+            return Ok(v);
+        }
         let texto = agente()
             .get(&format!("{MEDIATOR}/{lingua}/{chave}"))
             .query("detailed", "1")
@@ -370,4 +373,312 @@ fn atender(mut c: std::net::TcpStream, pasta: &Path, chave: &str) -> std::io::Re
 #[tauri::command]
 pub fn midia_base(app: tauri::AppHandle) -> Option<String> {
     app.try_state::<Servidor>().map(|s| s.base.clone())
+}
+
+// ---------------------------------------------------------------- catálogo de mídia
+//
+// O mesmo catálogo que o JW Library baixa (`app.jw-cdn.org/catalogs/media/<língua>.json.gz`,
+// JSON em linhas): a árvore de categorias e todos os vídeos/áudios (título,
+// imagens, duração), sem os endereços dos arquivos. Assim as abas abrem sem
+// internet e dá para buscar por nome; o arquivo de cada item vem da API
+// `media-items` na hora de tocar ou baixar.
+
+use std::collections::HashMap;
+use std::sync::Mutex;
+
+const CATALOGO_MIDIA: &str = "https://app.jw-cdn.org/catalogs/media/";
+const MEDIA_ITEMS: &str = "https://b.jw-cdn.org/apis/mediator/v1/media-items";
+
+pub struct CatalogoMidia {
+    categorias: Vec<serde_json::Value>,
+    itens: HashMap<String, serde_json::Value>,
+}
+
+#[derive(Default)]
+pub struct CacheMidia(Mutex<HashMap<String, std::sync::Arc<CatalogoMidia>>>);
+
+fn arquivo_catalogo(pasta: &Path, lingua: &str) -> PathBuf {
+    pasta.join(format!("catalogo-{lingua}.json"))
+}
+
+/// Baixa o catálogo de mídia de uma língua se não há ou se tem mais de 7 dias.
+fn garantir_catalogo(pasta: &Path, lingua: &str) -> Result<PathBuf, String> {
+    let destino = arquivo_catalogo(pasta, lingua);
+    let novo = std::fs::metadata(&destino)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.elapsed().ok())
+        .is_some_and(|idade| idade < Duration::from_secs(7 * 86400));
+    if novo {
+        return Ok(destino);
+    }
+    let baixar = || -> Result<(), String> {
+        std::fs::create_dir_all(pasta).map_err(|e| e.to_string())?;
+        let resp = agente().get(&format!("{CATALOGO_MIDIA}{lingua}.json.gz")).call().map_err(|e| e.to_string())?;
+        let mut gz = flate2::read::GzDecoder::new(resp.into_reader());
+        let tmp = destino.with_extension("json.tmp");
+        let mut saida = std::fs::File::create(&tmp).map_err(|e| e.to_string())?;
+        std::io::copy(&mut gz, &mut saida).map_err(|e| e.to_string())?;
+        std::fs::rename(&tmp, &destino).map_err(|e| e.to_string())
+    };
+    match baixar() {
+        Ok(()) => Ok(destino),
+        // Sem internet: fica o que já existe.
+        Err(_) if destino.is_file() => Ok(destino),
+        Err(e) => Err(e),
+    }
+}
+
+fn ler_catalogo(caminho: &Path) -> Result<CatalogoMidia, String> {
+    let texto = std::fs::read_to_string(caminho).map_err(|e| e.to_string())?;
+    let mut c = CatalogoMidia { categorias: vec![], itens: HashMap::new() };
+    for linha in texto.lines() {
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(linha) else { continue };
+        match v.get("type").and_then(|t| t.as_str()) {
+            Some("category") => c.categorias.push(v["o"].clone()),
+            Some("media-item") => {
+                if let Some(k) = v["o"].get("naturalKey").and_then(|k| k.as_str()) {
+                    c.itens.insert(k.to_string(), v["o"].clone());
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(c)
+}
+
+fn catalogo(app: &tauri::AppHandle, lingua: &str) -> Result<std::sync::Arc<CatalogoMidia>, String> {
+    let cache = app.state::<CacheMidia>();
+    if let Some(c) = cache.0.lock().map_err(|e| e.to_string())?.get(lingua) {
+        return Ok(c.clone());
+    }
+    let pasta = app.state::<EstadoMidia>().pasta.clone();
+    let c = std::sync::Arc::new(ler_catalogo(&garantir_catalogo(&pasta, lingua)?)?);
+    cache.0.lock().map_err(|e| e.to_string())?.insert(lingua.to_string(), c.clone());
+    Ok(c)
+}
+
+fn minutos(segundos: f64) -> String {
+    let s = segundos.round() as u64;
+    format!("{}m {}s", s / 60, s % 60)
+}
+
+/// Um item do catálogo no formato da API (o que a janela já entende), sem `files`.
+fn item_para_janela(o: &serde_json::Value) -> serde_json::Value {
+    let mut x = o.clone();
+    if let Some(m) = x.as_object_mut() {
+        let chave = o.get("naturalKey").cloned().unwrap_or_default();
+        m.insert("guid".into(), chave);
+        if let Some(d) = o.get("duration").and_then(|d| d.as_f64()) {
+            m.insert("durationFormattedMinSec".into(), minutos(d).into());
+        }
+        m.remove("checksums");
+    }
+    x
+}
+
+fn achar<'a>(lista: &'a [serde_json::Value], chave: &str) -> Option<&'a serde_json::Value> {
+    for c in lista {
+        if c.get("key").and_then(|k| k.as_str()) == Some(chave) {
+            return Some(c);
+        }
+        if let Some(subs) = c.get("subcategories").and_then(|s| s.as_array()) {
+            if let Some(a) = achar(subs, chave) {
+                return Some(a);
+            }
+        }
+    }
+    None
+}
+
+/// A categoria com as subcategorias (um nível) e os itens resolvidos.
+fn montar(cat: &serde_json::Value, itens: &HashMap<String, serde_json::Value>, nivel: u8) -> serde_json::Value {
+    let mut x = cat.clone();
+    if let Some(m) = x.as_object_mut() {
+        if let Some(chaves) = cat.get("media").and_then(|v| v.as_array()) {
+            let lista: Vec<serde_json::Value> =
+                chaves.iter().filter_map(|k| k.as_str()).filter_map(|k| itens.get(k)).map(item_para_janela).collect();
+            m.insert("media".into(), lista.into());
+        }
+        if let Some(subs) = cat.get("subcategories").and_then(|v| v.as_array()) {
+            let lista: Vec<serde_json::Value> = subs
+                .iter()
+                .map(|s| if nivel == 0 { montar(s, itens, 1) } else { serde_json::json!({ "key": s["key"], "name": s["name"], "images": s["images"], "type": s["type"] }) })
+                .collect();
+            m.insert("subcategories".into(), lista.into());
+        }
+    }
+    x
+}
+
+/// Uma categoria pelo catálogo local (sem internet, se ele já foi baixado).
+pub fn categoria_local(app: &tauri::AppHandle, lingua: &str, chave: &str) -> Option<serde_json::Value> {
+    let c = catalogo(app, lingua).ok()?;
+    let cat = achar(&c.categorias, chave)?;
+    Some(serde_json::json!({ "category": montar(cat, &c.itens, 0) }))
+}
+
+fn sem_acento(s: &str) -> String {
+    s.to_lowercase()
+        .chars()
+        .map(|c| match c {
+            'á' | 'à' | 'â' | 'ã' | 'ä' => 'a',
+            'é' | 'è' | 'ê' | 'ë' => 'e',
+            'í' | 'ì' | 'î' | 'ï' => 'i',
+            'ó' | 'ò' | 'ô' | 'õ' | 'ö' => 'o',
+            'ú' | 'ù' | 'û' | 'ü' => 'u',
+            'ç' => 'c',
+            'ñ' => 'n',
+            c => c,
+        })
+        .collect()
+}
+
+/// Busca vídeos ou áudios pelo título (todas as palavras), os mais novos primeiro.
+#[tauri::command]
+pub async fn midia_buscar(app: tauri::AppHandle, lingua: String, termos: String, tipo: String) -> Result<Vec<serde_json::Value>, String> {
+    if !so_codigo(&lingua) {
+        return Err("língua inválida".into());
+    }
+    fundo(move || {
+        let c = catalogo(&app, &lingua)?;
+        let palavras: Vec<String> = sem_acento(&termos).split_whitespace().map(str::to_string).collect();
+        if palavras.is_empty() {
+            return Ok(vec![]);
+        }
+        let formato = if tipo == "audio" { "AUDIO" } else { "VIDEO" };
+        let mut achados: Vec<&serde_json::Value> = c
+            .itens
+            .values()
+            .filter(|o| o.pointer("/keyParts/formatCode").and_then(|f| f.as_str()) == Some(formato))
+            .filter(|o| {
+                let titulo = sem_acento(o.get("title").and_then(|t| t.as_str()).unwrap_or(""));
+                palavras.iter().all(|p| titulo.contains(p.as_str()))
+            })
+            .collect();
+        achados.sort_by(|a, b| b.get("firstPublished").and_then(|v| v.as_str()).cmp(&a.get("firstPublished").and_then(|v| v.as_str())));
+        Ok(achados.into_iter().take(120).map(item_para_janela).collect())
+    })
+    .await
+}
+
+/// Os arquivos de um item (vídeo/áudio) pela API, para tocar ou baixar.
+#[tauri::command]
+pub async fn midia_item(lingua: String, chave: String) -> Result<serde_json::Value, String> {
+    if !so_codigo(&lingua) || !so_codigo(&chave) {
+        return Err("item inválido".into());
+    }
+    fundo(move || {
+        let texto = agente()
+            .get(&format!("{MEDIA_ITEMS}/{lingua}/{chave}"))
+            .query("clientType", "www")
+            .call()
+            .map_err(|e| format!("{}: {e}", t("sem conexão com o jw.org", "no connection to jw.org")))?
+            .into_string()
+            .map_err(|e| e.to_string())?;
+        let v: serde_json::Value = serde_json::from_str(&texto).map_err(|e| e.to_string())?;
+        v.pointer("/media/0").cloned().ok_or_else(|| t("Este item não está disponível.", "This item is not available.").to_string())
+    })
+    .await
+}
+
+// ---------------------------------------------------------------- notícias
+//
+// A faixa "NOVO VÍDEO | …" do Início do JW Library: `app.jw-cdn.org/apis/alerts`,
+// com o token público do próprio app (`tokens/jwl-public.jwt`). O HTML vem do
+// jw.org; aqui só passam <p>, <strong>, <em>, <br> e links para jw.org.
+
+const TOKEN: &str = "https://app.jw-cdn.org/tokens/jwl-public.jwt";
+const ALERTAS: &str = "https://app.jw-cdn.org/apis/alerts/list";
+
+#[derive(Serialize)]
+pub struct Noticia {
+    guid: String,
+    titulo: String,
+    corpo: String,
+}
+
+/// Só as marcas permitidas; links só para jw.org (com data-fora para abrir fora).
+fn limpar_html(html: &str) -> String {
+    let mut saida = String::new();
+    let mut resto = html;
+    while let Some(i) = resto.find('<') {
+        saida.push_str(&resto[..i]);
+        let Some(j) = resto[i..].find('>') else { break };
+        let marca = &resto[i + 1..i + j];
+        let fecha = marca.starts_with('/');
+        let nome: String = marca.trim_start_matches('/').chars().take_while(|c| c.is_ascii_alphanumeric()).collect::<String>().to_lowercase();
+        match nome.as_str() {
+            "p" | "strong" | "em" | "b" | "i" | "br" => saida.push_str(&format!("<{}{}>", if fecha { "/" } else { "" }, nome)),
+            "a" if fecha => saida.push_str("</a>"),
+            "a" => {
+                let href = marca.split("href=\"").nth(1).and_then(|r| r.split('"').next()).unwrap_or("").replace("&amp;", "&");
+                if href.starts_with("https://www.jw.org/") || href.starts_with("https://wol.jw.org/") {
+                    let seguro: String = href.chars().filter(|c| !"\"<>'`".contains(*c)).collect();
+                    saida.push_str(&format!("<a href=\"#\" data-fora=\"{seguro}\">"));
+                } else {
+                    saida.push_str("<a>");
+                }
+            }
+            _ => {}
+        }
+        resto = &resto[i + j + 1..];
+    }
+    saida.push_str(resto);
+    saida
+}
+
+#[tauri::command]
+pub async fn noticias(lingua: String) -> Result<Vec<Noticia>, String> {
+    if !so_codigo(&lingua) {
+        return Err("língua inválida".into());
+    }
+    fundo(move || {
+        let ag = agente();
+        let token = ag.get(TOKEN).call().map_err(|e| e.to_string())?.into_string().map_err(|e| e.to_string())?;
+        let texto = ag
+            .get(ALERTAS)
+            .query("type", "news")
+            .query("lang", &lingua)
+            .set("Authorization", &format!("Bearer {}", token.trim()))
+            .call()
+            .map_err(|e| e.to_string())?
+            .into_string()
+            .map_err(|e| e.to_string())?;
+        let v: serde_json::Value = serde_json::from_str(&texto).map_err(|e| e.to_string())?;
+        Ok(v.get("alerts")
+            .and_then(|a| a.as_array())
+            .map(|lista| {
+                lista
+                    .iter()
+                    .map(|a| Noticia {
+                        guid: a.get("guid").and_then(|g| g.as_str()).unwrap_or("").to_string(),
+                        titulo: limpar_html(a.get("title").and_then(|g| g.as_str()).unwrap_or("")),
+                        corpo: limpar_html(a.get("body").and_then(|g| g.as_str()).unwrap_or("")),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default())
+    })
+    .await
+}
+
+/// Abre um link do jw.org no navegador do sistema.
+#[tauri::command]
+pub fn abrir_link(url: String) -> Result<(), String> {
+    if !(url.starts_with("https://www.jw.org/") || url.starts_with("https://wol.jw.org/")) || url.chars().any(|c| c.is_whitespace()) {
+        return Err("link fora do jw.org".into());
+    }
+    std::process::Command::new("xdg-open").arg(url).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod testes {
+    use super::limpar_html;
+
+    #[test]
+    fn limpa_o_html_das_noticias() {
+        let h = limpar_html(r#"<strong>NOVO VÍDEO</strong> | <em>x</em><script>alert(1)</script><a href="https://www.jw.org/finder?lank=a&amp;b=c" onclick="y">ver</a><img src=x onerror=z><a href="javascript:1">j</a>"#);
+        assert_eq!(h, r##"<strong>NOVO VÍDEO</strong> | <em>x</em>alert(1)<a href="#" data-fora="https://www.jw.org/finder?lank=a&b=c">ver</a><a>j</a>"##);
+    }
 }

@@ -2,7 +2,7 @@
 // (como no JW Library do Windows: voltar à seção devolve onde se parou; a seta ← sobe um nível).
 const tauri = window.__TAURI__;
 const chamar = (cmd, args) => tauri.core.invoke(cmd, args);
-const VERSAO = '0.6';
+const VERSAO = '0.7';
 
 const SECOES = [
   ['inicio', 'Início', 'inicio'],
@@ -167,6 +167,24 @@ function configuracoes() {
   f.querySelector('#idioma').onchange = (e) => trocarIdioma(e.target.value);
   f.querySelector('#tema').onchange = (e) => { guardar('tema', e.target.value); aplicarTema(); };
   f.querySelector('#avisar').onchange = (e) => { guardar('avisar_downloads', e.target.checked); desenhar(); };
+}
+
+// ---------- Notícias (a faixa "NOVO VÍDEO | …" do JW Library) ----------
+async function faixaNoticias(c) {
+  let lista = [];
+  try { lista = await chamar('noticias', { lingua: BibliotecaJW.lingua() }); } catch (_) { return; }
+  const fechadas = ler('noticias_fechadas', []);
+  const n = lista.find((x) => !fechadas.includes(x.guid));
+  if (!n || !c.querySelector('.tela')) return;
+  const f = document.createElement('div');
+  f.className = 'faixa-noticia';
+  f.innerHTML = `<button class="abrir-noticia"><span>${n.titulo}</span>${icone('dir')}</button><button class="fechar-faixa" title="${t('Fechar')}">×</button>`;
+  f.querySelector('.abrir-noticia').onclick = () => {
+    const d = dialogo(t('Últimas notícias'), `<h3 class="titulo-noticia">${n.titulo}</h3>${n.corpo}`);
+    d.querySelectorAll('[data-fora]').forEach((a) => (a.onclick = (ev) => { ev.preventDefault(); chamar('abrir_link', { url: a.dataset.fora }).catch((x) => aviso(String(x))); }));
+  };
+  f.querySelector('.fechar-faixa').onclick = () => { guardar('noticias_fechadas', [...fechadas, n.guid].slice(-50)); f.remove(); };
+  c.querySelector('.tela').prepend(f);
 }
 
 // ---------- Arquivos novos em Downloads ----------
@@ -482,6 +500,7 @@ const TELAS = {
     }));
     ligarCartoes(c);
     faixaNovos(c);
+    faixaNoticias(c);
   },
 
   async biblia(c) {

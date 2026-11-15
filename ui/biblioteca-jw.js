@@ -12,15 +12,40 @@ const BibliotecaJW = (() => {
   function lingua() {
     try { return JSON.parse(localStorage.getItem('lingua_biblioteca')) || (Idioma.atual === 'en' ? 'E' : 'T'); } catch (_) { return 'T'; }
   }
-  const nomeLingua = () => (LINGUAS.find(([k]) => k === lingua()) || [0, lingua()])[1];
-  function escolherLingua(botao) {
-    const m = menu(botao, LINGUAS.map(([k, n]) => `<button data-l="${k}">${k === lingua() ? '✓ ' : ''}${esc(n)}</button>`).join(''));
-    m.onclick = (ev) => {
-      const k = ev.target.closest('[data-l]')?.dataset.l;
-      if (!k) return;
-      try { localStorage.setItem('lingua_biblioteca', JSON.stringify(k)); } catch (_) {}
-      fecharMenu();
-      desenhar();
+  function nomeLingua() {
+    const fixa = LINGUAS.find(([k]) => k === lingua());
+    if (fixa) return fixa[1];
+    try { return JSON.parse(localStorage.getItem('lingua_biblioteca_nome')) || lingua(); } catch (_) { return lingua(); }
+  }
+  // Todas as línguas do jw.org, com busca (como o seletor de idiomas do JW Library).
+  async function escolherLingua() {
+    const f = dialogo(t('Idioma das publicações'), `<input type="search" class="busca-lingua" placeholder="${t('Buscar idioma')}"><div class="lista-linguas"><p class="vazio">${t('Carregando…')}</p></div>`);
+    const caixa = f.querySelector('.lista-linguas');
+    let todas = [];
+    try { todas = await chamar('linguas_jw'); } catch (erro) { todas = LINGUAS.map(([code, vernacular]) => ({ code, vernacular, name: vernacular })); }
+    const tirar = (x) => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const mostrar = (filtro) => {
+      const f2 = tirar(filtro);
+      const lista = todas.filter((l) => !f2 || tirar(l.vernacular).includes(f2) || tirar(l.name).includes(f2) || tirar(l.code) === f2);
+      caixa.innerHTML = lista.slice(0, 300).map((l) => `<button class="item-lingua${l.code === lingua() ? ' atual' : ''}" data-l="${esc(l.code)}" data-n="${esc(l.vernacular)}">
+        <b>${esc(l.vernacular)}</b><span>${esc(l.name)}${l.isSignLanguage ? ` · ${t('língua de sinais')}` : ''}</span></button>`).join('') || `<p class="vazio">${t('Nada encontrado.')}</p>`;
+    };
+    mostrar('');
+    const busca = f.querySelector('.busca-lingua');
+    busca.oninput = () => mostrar(busca.value);
+    busca.focus();
+    caixa.onclick = async (ev) => {
+      const b = ev.target.closest('[data-l]');
+      if (!b) return;
+      const codigo = b.dataset.l;
+      caixa.innerHTML = `<p class="vazio">${t('Preparando o idioma {x}… (só na primeira vez)', { x: esc(b.dataset.n) })}</p>`;
+      try {
+        await chamar('catalogo_adicionar_lingua', { lingua: codigo });
+        try { localStorage.setItem('lingua_biblioteca', JSON.stringify(codigo)); localStorage.setItem('lingua_biblioteca_nome', JSON.stringify(b.dataset.n)); } catch (_) {}
+        f.remove();
+        await carregarInfo();
+        desenhar();
+      } catch (erro) { caixa.innerHTML = `<p class="vazio">${esc(erro)}</p>`; }
     };
   }
 
@@ -54,6 +79,7 @@ const BibliotecaJW = (() => {
       return;
     }
     const cats = await chamar('catalogo_categorias', { lingua: lingua() });
+    if (!cats.length) { lugar.innerHTML = `<div class="vazio"><h2>${t('Nenhuma publicação para ler neste idioma')}</h2><p>${t('O catálogo do jw.org não tem publicações .jwpub neste idioma. Veja as abas VÍDEO e ÁUDIO.')}</p></div>`; return; }
     lugar.innerHTML = `<div class="grade">${cats.map((k) => `<button class="categoria" data-cat="${k.chave}">${icone(ICONE_CATEGORIA[k.chave] || 'livro')}<span>${esc(k.nome)}</span><span class="quantas" title="${t('{i} na sua biblioteca, {n} no total', { i: k.instaladas, n: k.quantas })}">${k.instaladas ? `${k.instaladas} / ` : ''}${k.quantas}</span></button>`).join('')}</div>`;
     ligarCategorias(lugar);
     garantir(); // confere se há catálogo novo (no máximo 1x por semana)

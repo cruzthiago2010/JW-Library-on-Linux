@@ -402,8 +402,62 @@ pub async fn catalogo_atualizar(app: tauri::AppHandle) -> Result<bool, String> {
     .await
 }
 
-fn meps(lingua: &str) -> Result<i64, String> {
-    catalogo_jw::meps_de(lingua).ok_or_else(|| format!("{lingua}: idioma fora da lista"))
+fn meps_em(dados: &Path, lingua: &str) -> Result<i64, String> {
+    catalogo_jw::meps_de_em(dados, lingua).ok_or_else(|| format!("{lingua}: {}", t("idioma ainda não preparado", "language not prepared yet")))
+}
+
+/// A lista de todas as línguas do jw.org (código, nome na própria língua, nome
+/// na língua da interface, de sinais?), guardada por 7 dias.
+#[tauri::command]
+pub async fn linguas_jw(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let p = pastas(&app);
+    em_segundo_plano(move || {
+        let ui = if leitor_nucleo::idioma::ingles() { "E" } else { "T" };
+        let arquivo = p.dados.join(format!("linguas-{ui}.json"));
+        let novo = std::fs::metadata(&arquivo).and_then(|m| m.modified()).ok().and_then(|t| t.elapsed().ok()).is_some_and(|d| d.as_secs() < 7 * 86400);
+        if !novo {
+            let baixado = ureq::AgentBuilder::new()
+                .user_agent(leitor_baixar::api::AGENTE)
+                .timeout_read(std::time::Duration::from_secs(60))
+                .build()
+                .get(&format!("https://b.jw-cdn.org/apis/mediator/v1/languages/{ui}/all"))
+                .call()
+                .ok()
+                .and_then(|r| r.into_string().ok());
+            if let Some(texto) = baixado {
+                let _ = std::fs::create_dir_all(&p.dados);
+                let _ = std::fs::write(&arquivo, texto);
+            }
+        }
+        let texto = std::fs::read_to_string(&arquivo).map_err(|_| t("sem conexão com o jw.org", "no connection to jw.org").to_string())?;
+        let v: serde_json::Value = serde_json::from_str(&texto).map_err(|e| e.to_string())?;
+        Ok(v.get("languages").cloned().unwrap_or_default())
+    })
+    .await
+}
+
+/// Prepara uma língua nova para a Biblioteca: descobre o número dela e refaz o catálogo.
+#[tauri::command]
+pub async fn catalogo_adicionar_lingua(app: tauri::AppHandle, lingua: String) -> Result<i64, String> {
+    let p = pastas(&app);
+    let app2 = app.clone();
+    em_segundo_plano(move || {
+        if let Some(m) = catalogo_jw::meps_de_em(&p.dados, &lingua) {
+            return Ok(m);
+        }
+        let estado = app2.state::<EstadoBaixar>();
+        let m = {
+            let mut cliente = estado.cliente.lock().map_err(|e| e.to_string())?;
+            catalogo_jw::descobrir(&p.dados, &lingua, &mut cliente)?
+        };
+        if catalogo_jw::refazer(&p.dados).is_err() {
+            // Sem o catálogo completo guardado (versões antigas não guardavam): baixa de novo.
+            let _ = std::fs::remove_file(catalogo_jw::caminho(&p.dados));
+            catalogo_jw::atualizar(&p.dados, &mut |_, _| {})?;
+        }
+        Ok(m)
+    })
+    .await
 }
 
 /// O que está instalado na Biblioteca, por (sigla, edição, língua) → pasta.
@@ -423,7 +477,7 @@ pub struct CategoriaDoCatalogo {
 pub async fn catalogo_categorias(app: tauri::AppHandle, lingua: String) -> Result<Vec<CategoriaDoCatalogo>, String> {
     let p = pastas(&app);
     em_segundo_plano(move || {
-        let m = meps(&lingua)?;
+        let m = meps_em(&p.dados, &lingua)?;
         let todas = instaladas(&p.biblioteca);
         let mut saida: Vec<CategoriaDoCatalogo> = catalogo_jw::categorias(&p.dados, m)?
             .into_iter()
@@ -449,7 +503,7 @@ pub async fn catalogo_categorias(app: tauri::AppHandle, lingua: String) -> Resul
 #[tauri::command]
 pub async fn catalogo_anos(app: tauri::AppHandle, lingua: String, categoria: String) -> Result<Vec<i64>, String> {
     let p = pastas(&app);
-    em_segundo_plano(move || catalogo_jw::anos(&p.dados, meps(&lingua)?, &categoria)).await
+    em_segundo_plano(move || catalogo_jw::anos(&p.dados, meps_em(&p.dados, &lingua)?, &categoria)).await
 }
 
 #[derive(Serialize)]
@@ -469,7 +523,7 @@ pub struct ItemDaCategoria {
 pub async fn catalogo_publicacoes(app: tauri::AppHandle, lingua: String, categoria: String, ano: Option<i64>) -> Result<Vec<ItemDaCategoria>, String> {
     let p = pastas(&app);
     em_segundo_plano(move || {
-        let m = meps(&lingua)?;
+        let m = meps_em(&p.dados, &lingua)?;
         let todas = instaladas(&p.biblioteca);
         let registro = Registro::abrir(&p.registro()).unwrap_or_default();
         Ok(catalogo_jw::lista(&p.dados, m, &categoria, ano)?

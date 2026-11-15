@@ -4,6 +4,8 @@
 //! quando, só as línguas da lista `IDIOMAS` são copiadas para um `catalogo.db`
 //! pequeno, e o resto é apagado.
 use std::io::{Read, Write};
+#[allow(unused_imports)]
+use std::io::Seek;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -18,8 +20,88 @@ pub const IMAGENS: &str = "https://app.jw-cdn.org/catalogs/publications/";
 /// Código do jw.org → `MepsLanguageId` (o mesmo número das marcas do JW Library).
 pub const LINGUAS: &[(&str, i64)] = &[("T", 5), ("TPO", 785), ("E", 0), ("S", 1), ("F", 3), ("X", 2), ("I", 4)];
 
+/// O número MEPS de um código: os da lista fixa e os descobertos (`linguas.json`).
+pub fn meps_de_em(dados: &Path, codigo: &str) -> Option<i64> {
+    LINGUAS.iter().find(|(c, _)| *c == codigo).map(|(_, m)| *m).or_else(|| descobertas(dados).get(codigo).copied())
+}
+
 pub fn meps_de(codigo: &str) -> Option<i64> {
     LINGUAS.iter().find(|(c, _)| *c == codigo).map(|(_, m)| *m)
+}
+
+fn arquivo_linguas(dados: &Path) -> PathBuf {
+    dados.join("linguas.json")
+}
+
+/// Código → MEPS das línguas que o usuário escolheu além das fixas.
+pub fn descobertas(dados: &Path) -> std::collections::BTreeMap<String, i64> {
+    std::fs::read_to_string(arquivo_linguas(dados)).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default()
+}
+
+/// Todos os MEPS que entram no catálogo pequeno.
+fn todos_os_meps(dados: &Path) -> Vec<i64> {
+    let mut v: Vec<i64> = LINGUAS.iter().map(|(_, m)| *m).chain(descobertas(dados).into_values()).collect();
+    v.sort();
+    v.dedup();
+    v
+}
+
+/// Publicações pequenas que existem em quase todas as línguas (folhetos e brochuras).
+const AMOSTRAS: &[&str] = &["T-31", "T-30", "T-32", "T-33", "T-34", "T-35", "T-36", "T-37", "fg", "ll", "lff"];
+
+/// Descobre o número MEPS de um código baixando uma publicação pequena nessa
+/// língua e lendo o `manifest.json` (`publication.language`). Guarda em `linguas.json`.
+pub fn descobrir(dados: &Path, codigo: &str, cliente: &mut crate::Cliente) -> Result<i64, String> {
+    if let Some(m) = meps_de_em(dados, codigo) {
+        return Ok(m);
+    }
+    if !codigo.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') || codigo.is_empty() || codigo.len() > 12 {
+        return Err("código de língua inválido".into());
+    }
+    let partes = dados.join("partes");
+    for sigla in AMOSTRAS {
+        let Ok(Some(arquivo)) = cliente.consultar(&crate::Pedido::novo(sigla, codigo, "")) else { continue };
+        if arquivo.tamanho > 40 * 1024 * 1024 {
+            continue;
+        }
+        let Ok(jwpub) = cliente.baixar(&arquivo, &partes, &mut |_, _| {}) else { continue };
+        let meps = (|| -> Option<i64> {
+            let f = std::fs::File::open(&jwpub).ok()?;
+            let mut z = zip::ZipArchive::new(f).ok()?;
+            let mut texto = String::new();
+            z.by_name("manifest.json").ok()?.read_to_string(&mut texto).ok()?;
+            let v: serde_json::Value = serde_json::from_str(&texto).ok()?;
+            v.pointer("/publication/language")?.as_i64()
+        })();
+        let _ = std::fs::remove_file(&jwpub);
+        if let Some(m) = meps {
+            let mut todas = descobertas(dados);
+            todas.insert(codigo.to_string(), m);
+            std::fs::create_dir_all(dados).map_err(|e| e.to_string())?;
+            std::fs::write(arquivo_linguas(dados), serde_json::to_string_pretty(&todas).unwrap()).map_err(|e| e.to_string())?;
+            return Ok(m);
+        }
+    }
+    Err(format!("{codigo}: não há publicações nesse idioma"))
+}
+
+/// Refaz o catálogo pequeno a partir do completo guardado (depois de uma língua nova).
+pub fn refazer(dados: &Path) -> Result<(), String> {
+    let gz = dados.join("catalogo.db.gz");
+    let versao = versao_local(dados).map(|(v, _)| v).unwrap_or_default();
+    if !gz.is_file() {
+        return Err("catálogo completo não encontrado".into());
+    }
+    let grande = dados.join("catalogo-completo.db");
+    let abrir = || -> Result<(), String> {
+        let mut entrada = flate2::read::GzDecoder::new(std::fs::File::open(&gz).map_err(|e| e.to_string())?);
+        let mut saida = std::fs::File::create(&grande).map_err(|e| e.to_string())?;
+        std::io::copy(&mut entrada, &mut saida).map_err(|e| e.to_string())?;
+        reduzir(&grande, &caminho(dados), &versao, &todos_os_meps(dados))
+    };
+    let r = abrir();
+    let _ = std::fs::remove_file(&grande);
+    r
 }
 
 /// `PublicationTypeId` → a categoria da Biblioteca (as mesmas chaves de
@@ -81,50 +163,45 @@ pub fn atualizar(dados: &Path, progresso: &mut dyn FnMut(u64, u64)) -> Result<bo
         return Ok(false);
     }
     std::fs::create_dir_all(dados).map_err(|e| e.to_string())?;
-    let grande = dados.join("catalogo-completo.db");
+    let gz = dados.join("catalogo.db.gz");
+    let parcial = dados.join("catalogo.db.gz.part");
     let resposta = ag.get(&format!("{BASE}{atual}/catalog.db.gz")).call().map_err(|e| format!("baixar o catálogo: {e}"))?;
     let total: u64 = resposta.header("content-length").and_then(|v| v.parse().ok()).unwrap_or(0);
     {
-        // Lê o .gz enquanto chega, contando o progresso, e grava já aberto.
-        struct Contador<R: Read, F: FnMut(u64, u64)> {
-            r: R,
-            lido: u64,
-            total: u64,
-            f: F,
-        }
-        impl<R: Read, F: FnMut(u64, u64)> Read for Contador<R, F> {
-            fn read(&mut self, b: &mut [u8]) -> std::io::Result<usize> {
-                let n = self.r.read(b)?;
-                self.lido += n as u64;
-                (self.f)(self.lido, self.total);
-                Ok(n)
-            }
-        }
-        let contador = Contador { r: resposta.into_reader(), lido: 0, total, f: |a, b| progresso(a, b) };
-        let mut gz = flate2::read::GzDecoder::new(contador);
-        let mut saida = std::fs::File::create(&grande).map_err(|e| e.to_string())?;
+        let mut leitor = resposta.into_reader();
+        let mut saida = std::fs::File::create(&parcial).map_err(|e| e.to_string())?;
         let mut buf = vec![0u8; 256 * 1024];
+        let mut lido = 0u64;
         loop {
-            let n = gz.read(&mut buf).map_err(|e| format!("catálogo interrompido: {e}"))?;
+            let n = leitor.read(&mut buf).map_err(|e| format!("catálogo interrompido: {e}"))?;
             if n == 0 {
                 break;
             }
             saida.write_all(&buf[..n]).map_err(|e| e.to_string())?;
+            lido += n as u64;
+            progresso(lido, total);
         }
     }
-    let resultado = reduzir(&grande, &caminho(dados), &atual);
+    std::fs::rename(&parcial, &gz).map_err(|e| e.to_string())?;
+    let grande = dados.join("catalogo-completo.db");
+    {
+        let mut entrada = flate2::read::GzDecoder::new(std::fs::File::open(&gz).map_err(|e| e.to_string())?);
+        let mut saida = std::fs::File::create(&grande).map_err(|e| e.to_string())?;
+        std::io::copy(&mut entrada, &mut saida).map_err(|e| format!("catálogo: {e}"))?;
+    }
+    let resultado = reduzir(&grande, &caminho(dados), &atual, &todos_os_meps(dados));
     let _ = std::fs::remove_file(&grande);
     resultado.map(|_| true)
 }
 
 /// Copia só as línguas de `LINGUAS` do catálogo completo para o pequeno.
-fn reduzir(grande: &Path, destino: &Path, versao: &str) -> Result<(), String> {
+fn reduzir(grande: &Path, destino: &Path, versao: &str, meps: &[i64]) -> Result<(), String> {
     let novo = destino.with_extension("db.novo");
     let _ = std::fs::remove_file(&novo);
     let c = Connection::open(&novo).map_err(|e| e.to_string())?;
     let erro = |e: rusqlite::Error| format!("catálogo: {e}");
     c.execute("ATTACH DATABASE ?1 AS jw", [grande.to_string_lossy()]).map_err(erro)?;
-    let linguas = LINGUAS.iter().map(|(_, m)| m.to_string()).collect::<Vec<_>>().join(",");
+    let linguas = meps.iter().map(|m| m.to_string()).collect::<Vec<_>>().join(",");
     c.execute_batch(&format!(
         "CREATE TABLE Pub (lingua INTEGER, simbolo TEXT, edicao INTEGER, titulo TEXT, titulo_edicao TEXT, curto TEXT,
              ano INTEGER, tipo INTEGER, tamanho INTEGER, modificado TEXT, capa TEXT, larga TEXT);
@@ -238,7 +315,7 @@ mod testes {
         let Ok(grande) = std::env::var("CATALOGO_JW") else { return };
         let pasta = std::env::temp_dir().join(format!("catalogo-{}", std::process::id()));
         std::fs::create_dir_all(&pasta).unwrap();
-        reduzir(Path::new(&grande), &caminho(&pasta), "teste").unwrap();
+        reduzir(Path::new(&grande), &caminho(&pasta), "teste", &[5, 0]).unwrap();
         let cats = categorias(&pasta, 5).unwrap();
         println!("{cats:?}");
         assert_eq!(cats[0].0, "biblia");
