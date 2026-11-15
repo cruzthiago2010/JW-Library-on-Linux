@@ -88,9 +88,17 @@ fn baixador() -> Option<PathBuf> {
     std::env::split_paths(&caminhos).map(|d| d.join("jw-baixador")).find(|c| c.is_file())
 }
 
+/// "instalado" (dá para abrir daqui), "flatpak" (o app está no Flatpak e não
+/// enxerga outros programas) ou "nao".
 #[tauri::command]
-fn tem_baixador() -> bool {
-    baixador().is_some()
+fn tem_baixador() -> &'static str {
+    if baixador().is_some() {
+        "instalado"
+    } else if std::env::var_os("FLATPAK_ID").is_some() {
+        "flatpak"
+    } else {
+        "nao"
+    }
 }
 
 /// Abre o baixador de publicações (projeto irmão), que instala os .jwpub na
@@ -532,6 +540,7 @@ fn servir<R: tauri::Runtime>(ctx: UriSchemeContext<'_, R>, pedido: Request<Vec<u
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("conteudo", servir)
         .setup(|app| {
             // No Flatpak a pasta de dados seria ~/.var/app/<id>/…; usamos a mesma do

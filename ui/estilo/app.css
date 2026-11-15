@@ -344,3 +344,10 @@ body.soltando #soltar { display: grid; }
 .cartao .mais-cartao svg { width: 18px; height: 18px; }
 @media (hover: none) { .cartao .mais-cartao { opacity: 1; } }
 .cartao > div { padding-right: 22px; }
+
+/* Convite para o baixador, no Início. */
+.faixa-baixador { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--borda); border-left: 4px solid var(--roxo); border-radius: 6px; background: var(--fundo); }
+.faixa-baixador > svg { width: 22px; height: 22px; color: var(--roxo); flex: none; }
+.faixa-baixador span { flex: 1; }
+.faixa-baixador .fechar-faixa { width: 30px; height: 30px; border-radius: 50%; font-size: 18px; color: var(--texto-suave); }
+.faixa-baixador .fechar-faixa:hover { background: var(--fundo-bloco); }

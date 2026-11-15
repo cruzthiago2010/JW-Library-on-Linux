@@ -128,6 +128,13 @@ const EN = {
   'Seus grifos e notas continuam guardados e voltam se você importar a publicação de novo.': 'Your highlights and notes are kept and come back if you import the publication again.',
   'Publicação excluída.': 'Publication deleted.',
   'Baixar publicações': 'Download publications',
+  'O Baixador para JW Library on Linux escolhe as publicações e o idioma, baixa os arquivos .jwpub do jw.org e os coloca direto na sua Biblioteca. Ele também avisa quando sai uma edição nova ou uma atualização.':
+    'The Downloader for JW Library on Linux lets you pick publications and a language, downloads the .jwpub files from jw.org and puts them straight into your Library. It also tells you when a new issue or an update comes out.',
+  'Depois de instalado, abra o Baixador pelo menu de aplicativos. As publicações aparecem aqui sozinhas.': 'Once installed, open the Downloader from your applications menu. Publications show up here by themselves.',
+  'Depois de instalado, este botão abre o Baixador direto.': 'Once installed, this button opens the Downloader directly.',
+  'Agora não': 'Not now',
+  'Conhecer o Baixador': 'Get the Downloader',
+  'Busque e baixe publicações do jw.org com o Baixador para JW Library on Linux.': 'Find and download publications from jw.org with the Downloader for JW Library on Linux.',
   'Título': 'Title',
   'Maior arquivo': 'Largest file',
   'Mais recentes': 'Most recent',

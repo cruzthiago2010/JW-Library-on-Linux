@@ -15,7 +15,8 @@ const pilhas = Object.fromEntries(SECOES.map(([s]) => [s, [{ tela: s }]]));
 let secao = 'inicio';
 let base = '';
 let biblioteca = { categorias: [], cartoes: [] };
-let temBaixador = false;
+let temBaixador = 'nao';
+const URL_BAIXADOR = 'https://github.com/cruzthiago2010/JW-Library-Downloader-on-Linux';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -240,6 +241,33 @@ function removerPublicacao(pasta, titulo, tamanho = 0) {
         desenhar();
       } catch (erro) { aviso(t('Não deu para excluir: {x}', { x: erro }), 8000); }
     }]]);
+}
+
+// O baixador (projeto irmão) busca e baixa as publicações do jw.org e as instala
+// na mesma Biblioteca. Instalado: abre. Senão: explica e leva à página dele.
+function baixarPublicacoes() {
+  if (temBaixador === 'instalado') return chamar('abrir_baixador').catch((x) => aviso(String(x)));
+  const corpo = `<p>${t('O Baixador para JW Library on Linux escolhe as publicações e o idioma, baixa os arquivos .jwpub do jw.org e os coloca direto na sua Biblioteca. Ele também avisa quando sai uma edição nova ou uma atualização.')}</p>
+    <p>${temBaixador === 'flatpak' ? t('Depois de instalado, abra o Baixador pelo menu de aplicativos. As publicações aparecem aqui sozinhas.') : t('Depois de instalado, este botão abre o Baixador direto.')}</p>`;
+  dialogo(t('Baixar publicações'), corpo, [[t('Agora não'), null], [t('Conhecer o Baixador'), abrirPaginaBaixador]]);
+}
+function abrirPaginaBaixador() {
+  const abrirUrl = tauri.opener?.openUrl;
+  if (abrirUrl) abrirUrl(URL_BAIXADOR).catch(() => aviso(URL_BAIXADOR, 10000));
+  else aviso(URL_BAIXADOR, 10000);
+}
+function faixaBaixador(c) {
+  if (temBaixador === 'instalado' || ler('aviso_baixador_fechado', false)) return;
+  const f = document.createElement('div');
+  f.className = 'faixa-baixador';
+  f.innerHTML = `${icone('nuvem')}<span>${t('Busque e baixe publicações do jw.org com o Baixador para JW Library on Linux.')}</span>
+    <button class="botao" data-o="ver">${t('Conhecer o Baixador')}</button><button class="fechar-faixa" data-o="fechar" title="${t('Fechar')}">×</button>`;
+  f.onclick = (e) => {
+    const o = e.target.closest('[data-o]')?.dataset.o;
+    if (o === 'ver') abrirPaginaBaixador();
+    if (o === 'fechar') { guardar('aviso_baixador_fechado', true); f.remove(); }
+  };
+  c.querySelector('.boas-vindas')?.after(f);
 }
 
 async function carregarBiblioteca() {
@@ -472,6 +500,7 @@ const TELAS = {
     }));
     ligarCartoes(c);
     faixaNovos(c);
+    faixaBaixador(c);
   },
 
   async biblia(c) {
@@ -620,7 +649,7 @@ const TELAS = {
 
   biblioteca(c, e) {
     const aba = e.aba || 'publicacoes';
-    const acoes = [...(temBaixador ? [['nuvem', t('Baixar publicações'), () => chamar('abrir_baixador').catch((x) => aviso(String(x)))]] : []), ['buscar', t('Buscar nas publicações'), () => abrir({ tela: 'busca', onde: 'publicacoes' })], ['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico]];
+    const acoes = [['nuvem', t('Baixar publicações'), baixarPublicacoes], ['buscar', t('Buscar nas publicações'), () => abrir({ tela: 'busca', onde: 'publicacoes' })], ['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico]];
     if (aba === 'baixados') acoes.unshift(['ordenar', t('Ordenar'), (ev, botao) => {
       const m = menu(botao, ['titulo:Título', 'maior:Maior arquivo', 'recente:Mais recentes'].map((o) => {
         const [k, n] = o.split(':');
