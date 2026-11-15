@@ -67,6 +67,9 @@ pub struct Cartao {
     pub simbolo: String,
     pub ano: i64,
     pub edicao: i64,
+    /// `UndatedSymbol` ("w", "lff") e `MepsLanguageIndex`: para achar no catálogo do jw.org.
+    pub sigla: String,
+    pub lingua: i64,
     pub categoria: String,
     pub capa: Option<String>,
     /// Bytes ocupados no disco (banco + imagens).
@@ -111,6 +114,8 @@ pub fn cartoes(raiz: &Path) -> Vec<Cartao> {
             simbolo: p.simbolo,
             ano: p.ano,
             edicao: p.edicao,
+            sigla: p.sigla,
+            lingua: p.lingua,
         })
         .collect()
 }

@@ -15,7 +15,9 @@
 | ![Home](docs/screenshots/inicio.jpg) | ![Library](docs/screenshots/biblioteca.jpg) |
 | ![Highlight colors](docs/screenshots/grifar.jpg) | ![Article with answer field](docs/screenshots/artigo.jpg) |
 | ![Meetings of the week](docs/screenshots/reunioes.jpg) | ![Notes and tags](docs/screenshots/notas.jpg) |
-| ![Download tab: catalog](docs/screenshots/baixar-catalogo.jpg) | ![Download tab: my selection](docs/screenshots/baixar-selecao.jpg) |
+| ![Library: every category of the jw.org catalog](docs/screenshots/biblioteca-categorias.jpg) | ![Books: installed and to download](docs/screenshots/biblioteca-livros.jpg) |
+| ![Video tab](docs/screenshots/video.jpg) | ![Playing a video](docs/screenshots/video-tocando.jpg) |
+| ![Audio tab](docs/screenshots/audio.jpg) | ![Audio Bible](docs/screenshots/audio-biblia.jpg) |
 
 ![Dark theme](docs/screenshots/escuro.jpg)
 
@@ -24,8 +26,7 @@
 ## English
 
 A `.jwpub` publication reader for Linux, in the style of JW Library for Windows.
-It works offline with the `.jwpub` files you have: download them in the **Download** tab of the
-Library, or import files you already have (from jw.org or copied from another device).
+It works offline with the `.jwpub` files you have: download them in the **Library**, or import files you already have (from jw.org or copied from another device).
 
 Community project with **no official connection** to the organization. The app ships no
 publications and no JW Library CSS: publications are styled by its own CSS (`ui/estilo/`).
@@ -43,9 +44,11 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
 - **Reader** with a study panel (footnotes, quoted passages, Bible texts), article arrows, text size,
   full screen, light and dark themes.
 - **Bible**: books, chapters, study notes, marginal references, verse menu and search.
-- **Download** tab in the Library: pick publications and a language from a catalog, download them
-  from jw.org straight into the Library, and get notified about new issues (The Watchtower, Meeting
-  Workbook) and updated files. Formerly the separate "Downloader for JW Library on Linux".
+- **Library like JW Library**: every publication of the jw.org catalog by category, with covers; the
+  ones you don't have show a cloud and their size, and one click downloads them. **Automatic updates**
+  download new issues of the magazines and workbooks you choose (formerly the separate Downloader).
+- **Video and Audio** tabs: jw.org categories, watch and listen inside the app, download for offline
+  use, and the **audio Bible**.
 - **Search** across all imported publications, and delete publications from the library.
 - **Meetings**: the workbook and the Watchtower study of the week, with week arrows.
 - **Personal Study**: highlights in 6 colors, notes with tags, bookmarks (10 ribbons), answer fields
@@ -57,8 +60,8 @@ The interface is in **English** or **Brazilian Portuguese** (chosen on first lau
 
 Download from the [Releases](../../releases/latest) page:
 
-- **Flatpak** (any distribution): `flatpak install --user JW_Library_on_Linux-0.5.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Needs Flatpak with the Flathub remote.
-- **AppImage**: make `JW_Library_on_Linux-0.5.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) executable and run it.
+- **Flatpak** (any distribution): `flatpak install --user JW_Library_on_Linux-0.6.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Needs Flatpak with the Flathub remote.
+- **AppImage**: make `JW_Library_on_Linux-0.6.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) executable and run it.
 
 📖 **[Where to put your .jwpub files and how to import them](docs/PUBLICACOES.md#english)**
 
@@ -79,8 +82,8 @@ Requires `libwebkit2gtk-4.1-dev`, `librsvg2-dev`, `pkg-config` and `libssl-dev`.
 ### Disclaimer
 
 This is an independent project made by volunteers, **not affiliated** with the Watch Tower Bible
-and Tract Society or with JW Library. No publications are included: the Download tab fetches `.jwpub` files
-from jw.org's public download service, one request per second, for personal use. Names mentioned belong to their owners. Screenshots show the app opening
+and Tract Society or with JW Library. No publications are included: the app fetches `.jwpub` files, videos and audio
+from jw.org's public download services, one request per second, for personal use. Names mentioned belong to their owners. Screenshots show the app opening
 publications for illustration only.
 
 ### License
@@ -92,7 +95,7 @@ GPL-3.0-or-later (see `LICENSE`).
 ## Português
 
 Leitor de publicações `.jwpub` no estilo do JW Library do Windows, para quem usa Linux.
-Funciona sem internet com os arquivos `.jwpub` que você tem: baixe na aba **Baixar** da Biblioteca
+Funciona sem internet com os arquivos `.jwpub` que você tem: baixe pela **Biblioteca**
 ou importe os arquivos que já tem (do jw.org ou copiados de outro aparelho).
 
 Projeto da comunidade, **sem ligação oficial** com a organização. O app não traz publicações nem o
@@ -108,9 +111,11 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
 - **Leitor** com painel de estudo (notas de rodapé, trechos citados, textos bíblicos), setas de artigo,
   tamanho do texto, tela inteira, tema claro/escuro.
 - **Bíblia**: livros, capítulos, notas de estudo, referências marginais, menu do versículo e busca.
-- Aba **Baixar** na Biblioteca: escolha publicações e idioma num catálogo, baixe do jw.org direto
-  para a Biblioteca e receba aviso de edição nova (A Sentinela, Apostila) e de arquivo atualizado.
-  Era o antigo "Baixador para JW Library on Linux", agora embutido.
+- **Biblioteca igual à do JW Library**: todas as publicações do catálogo do jw.org por categoria, com
+  capas; as que você não tem mostram a nuvem e o tamanho, e um clique baixa. **Atualizações
+  automáticas** baixam as edições novas das revistas e apostilas que você escolher (o antigo Baixador).
+- Abas **Vídeo e Áudio**: categorias do jw.org, assistir e ouvir no app, baixar para ver sem internet
+  e a **Bíblia em áudio**.
 - **Busca** em todas as publicações importadas, e excluir publicações da biblioteca.
 - **Reuniões**: a apostila e o estudo de A Sentinela da semana, com setas de semana.
 - **Estudo Pessoal**: grifos em 6 cores, notas com etiquetas, marcadores (10 fitas), campos de
@@ -120,8 +125,8 @@ ser trocado em Configurações. As publicações abrem em qualquer idioma.
 
 ### Instalar
 
-- **Flatpak** (qualquer distribuição): `flatpak install --user JW_Library_on_Linux-0.5.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Precisa do Flatpak com o Flathub configurado.
-- **AppImage**: dê permissão de execução ao `JW_Library_on_Linux-0.5.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) e abra.
+- **Flatpak** (qualquer distribuição): `flatpak install --user JW_Library_on_Linux-0.6.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`). Precisa do Flatpak com o Flathub configurado.
+- **AppImage**: dê permissão de execução ao `JW_Library_on_Linux-0.6.0-x86_64.AppImage` (ARM: `-aarch64.AppImage`) e abra.
 
 📖 **[Onde ficam os arquivos .jwpub e como importar](docs/PUBLICACOES.md#português)**
 
@@ -130,7 +135,8 @@ Os dados ficam em `~/.local/share/io.github.leitorjw/` (`biblioteca/` com as pub
 
 ### Pastas do código
 
-- `baixar/` — a aba Baixar: API pública de download do jw.org, catálogo, seleção e registro.
+- `baixar/` — baixar do jw.org: catálogo completo de publicações (`catalogo_jw.rs`), API de download, seleção e registro.
+- `app/src/midia.rs` + `ui/midia.js` — abas Vídeo e Áudio (API de categorias do jw.org e Bíblia em áudio).
 - `nucleo/` — sem Tauri, testável: `.jwpub` (`jwpub.rs`), Biblioteca
   (`biblioteca.rs`), leitor (`leitor.rs`), painel (`estudo.rs`), Reuniões (`reunioes.rs`), Bíblia e
   busca (`biblia.rs`, `busca.rs`), estudo pessoal (`pessoal.rs` + `userdata.sql`, o esquema v16 do
@@ -154,8 +160,8 @@ Precisa de `libwebkit2gtk-4.1-dev`, `librsvg2-dev`, `pkg-config` e `libssl-dev`.
 ### Aviso
 
 Este é um projeto independente, feito por voluntários, **sem nenhuma ligação** com a Watch Tower
-Bible and Tract Society nem com o JW Library. Nenhuma publicação acompanha o app: a aba Baixar busca os `.jwpub` no
-serviço público de download do jw.org, uma pergunta por segundo, para uso pessoal. Os nomes citados pertencem aos seus donos.
+Bible and Tract Society nem com o JW Library. Nenhuma publicação acompanha o app: ele busca os `.jwpub`, vídeos e áudios nos
+serviços públicos de download do jw.org, uma pergunta por segundo, para uso pessoal. Os nomes citados pertencem aos seus donos.
 
 ### Licença
 

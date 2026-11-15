@@ -219,9 +219,10 @@ const Baixar = (() => {
     try { await (estado.parte === 'selecao' ? selecao : catalogo)(corpo); }
     catch (erro) { corpo.innerHTML = `<div class="vazio"><h2>${t('Não deu para abrir')}</h2><p>${esc(erro)}</p></div>`; }
   }
-  function montar(lugar) {
+  function montar(lugar, soSelecao = false) {
     lugarAtual = lugar;
-    lugar.innerHTML = `<div class="baixar"><div class="sub-abas">${[['catalogo', 'Catálogo'], ['selecao', 'Minha seleção']].map(([k, n]) =>
+    if (soSelecao) estado.parte = 'selecao';
+    lugar.innerHTML = `<div class="baixar"><div class="sub-abas"${soSelecao ? ' hidden' : ''}>${[['catalogo', 'Catálogo'], ['selecao', 'Minha seleção']].map(([k, n]) =>
       `<button data-parte="${k}">${t(n)}</button>`).join('')}</div><div class="baixar-corpo"></div>
       <p class="dica aviso-termos">${t('Baixa direto do jw.org, uma pergunta por segundo. Para uso pessoal.')}</p></div>`;
     lugar.querySelectorAll('[data-parte]').forEach((b) => (b.onclick = () => { estado.parte = b.dataset.parte; desenharAqui(); }));

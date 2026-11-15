@@ -9,6 +9,7 @@
 //! registro guarda o MD5 para perceber atualização.
 pub mod api;
 pub mod catalogo;
+pub mod catalogo_jw;
 pub mod registro;
 pub mod selecao;
 

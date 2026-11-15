@@ -1,3 +1,14 @@
+# JW Library on Linux 0.6.0
+
+- **Biblioteca igual à do JW Library**: todas as categorias do catálogo do jw.org (Livros, Brochuras, Folhetos, Séries, A Sentinela, Despertai!, Apostilas, Ministério do Reino, Programas…), com capas. As publicações que você não tem aparecem com a nuvem e o tamanho: um clique baixa. Seletor de idioma das publicações. / **Library like JW Library**: the whole jw.org catalog, one-click download.
+- **Abas VÍDEO e ÁUDIO**: as categorias do jw.org (De Nosso Estúdio, Crianças, Família, Músicas, Cante de Coração para Jeová…), assistir e ouvir dentro do app, baixar para ver sem internet e **Bíblia em áudio**. / **Video and Audio tabs**, offline downloads and the audio Bible.
+- "Atualizações automáticas" (na barra da Biblioteca): revistas e apostilas cujas edições novas são baixadas sozinhas; no "..." de uma revista, "Baixar as edições novas sozinho". / Automatic updates for magazines and workbooks.
+
+## Instalar · Install
+
+- Flatpak: `flatpak install --user JW_Library_on_Linux-0.6.0-x86_64.flatpak` (ARM: `-aarch64.flatpak`)
+- AppImage: `chmod +x JW_Library_on_Linux-0.6.0-x86_64.AppImage` e abra / and run it (ARM: `-aarch64.AppImage`)
+
 # JW Library on Linux 0.5.0
 
 - **Aba BAIXAR na Biblioteca** (o antigo Baixador, agora embutido): catálogo, Minha seleção, "Baixar agora", procurar atualizações uma vez por dia e aviso de edição nova ou arquivo atualizado. Quem usava o Baixador separado tem a seleção trazida sozinha. / **DOWNLOAD tab** in the Library (the former Downloader, now built in).

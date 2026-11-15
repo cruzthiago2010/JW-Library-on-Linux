@@ -8,6 +8,7 @@ use std::sync::Mutex;
 
 use leitor_nucleo::pessoal::{self, Alvo, Faixa, Identidade, Pessoal};
 mod baixar;
+mod midia;
 
 use leitor_nucleo::{backup, biblia, biblioteca, busca, estudo, jwpub, leitor, reunioes};
 use tauri::http::{header, Request, Response, StatusCode};
@@ -428,6 +429,12 @@ fn desmarcar(app: tauri::AppHandle, alvo: Alvo, slot: i64) -> Result<(), String>
 
 // ---------------------------------------------------------------- backup
 
+/// Os nomes dos 66 livros no idioma da interface (para a Bíblia em áudio, sem precisar da Bíblia instalada).
+#[tauri::command]
+fn nomes_dos_livros() -> Vec<&'static str> {
+    (1..=66).map(biblia::nome).collect()
+}
+
 /// O idioma da interface ("pt" ou "en"), escolhido na janela.
 #[tauri::command]
 fn definir_idioma(idioma: String) {
@@ -503,6 +510,20 @@ fn servir<R: tauri::Runtime>(ctx: UriSchemeContext<'_, R>, pedido: Request<Vec<u
         },
         _ => None,
     };
+    if let ["video", nome] = partes.as_slice() {
+        let pasta = ctx.app_handle().state::<midia::EstadoMidia>().pasta.clone();
+        let range = pedido.headers().get(header::RANGE).and_then(|v| v.to_str().ok());
+        return match jwpub::nome_seguro(nome).and_then(|n| midia::servir_arquivo(&pasta, &n, range)) {
+            Some((status, cabecalhos, dados)) => {
+                let mut r = Response::builder().status(status).header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+                for (k, v) in cabecalhos {
+                    r = r.header(k, v);
+                }
+                r.body(Cow::Owned(dados)).unwrap()
+            }
+            None => Response::builder().status(StatusCode::NOT_FOUND).body(Cow::Borrowed(&b""[..])).unwrap(),
+        };
+    }
     let resposta = Response::builder().header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*");
     match arquivo.and_then(|a| fs::read(&a).ok().map(|d| (a, d))) {
         Some((a, dados)) => resposta
@@ -540,13 +561,18 @@ pub fn run() {
             fs::create_dir_all(&raiz)?;
             let pessoal = Pessoal::abrir(&dados.join("userData.db")).map_err(|e| e.to_string())?;
             app.manage(baixar::EstadoBaixar::novo(&dados));
+            let estado_midia = midia::EstadoMidia::novo(&dados);
+            if let Ok(servidor) = midia::iniciar_servidor(estado_midia.pasta.clone()) {
+                app.manage(servidor);
+            }
+            app.manage(estado_midia);
             app.manage(Estado { raiz, dados, pessoal: Mutex::new(pessoal) });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![listar, importar, sumario, documento, achar_meps, painel, semana, novos_em_downloads,
             livros, capitulo, referencias, texto_biblico, buscar_biblia,
             marcas_do_lugar, grifar, remover_grifo, anotar, apagar_nota, campo, notas, etiquetas, apagar_etiqueta,
-            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, baixar::baixar_catalogo, baixar::baixar_selecao, baixar::baixar_escolher, baixar::baixar_tirar, baixar::baixar_sincronizar, baixar::baixar_atualizar, baixar::baixar_ocupado, baixar::baixar_procurar, baixar::baixar_opcoes, baixar::baixar_atualizar_sozinho, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
+            marcadores, marcar, desmarcar, definir_idioma, remover_publicacao, buscar_publicacoes, baixar::baixar_catalogo, baixar::baixar_selecao, baixar::baixar_escolher, baixar::baixar_tirar, baixar::baixar_sincronizar, baixar::baixar_atualizar, baixar::baixar_ocupado, baixar::baixar_procurar, baixar::baixar_opcoes, baixar::baixar_atualizar_sozinho, baixar::catalogo_info, baixar::catalogo_atualizar, baixar::catalogo_categorias, baixar::catalogo_anos, baixar::catalogo_publicacoes, baixar::baixar_publicacao, midia::midia_categoria, midia::midia_biblia, midia::midia_baixadas, midia::midia_baixar, midia::midia_apagar, midia::midia_abrir_fora, midia::midia_base, nomes_dos_livros, resumo_pessoal, criar_backup, conferir_backup, restaurar_backup
         ])
         .run(tauri::generate_context!())
         .expect("erro ao abrir o app");

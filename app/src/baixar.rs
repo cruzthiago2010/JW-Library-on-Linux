@@ -368,3 +368,144 @@ pub async fn baixar_atualizar_sozinho(app: tauri::AppHandle, valor: bool) -> Res
     })
     .await
 }
+
+// ---------------------------------------------------------------- catálogo completo
+
+use leitor_baixar::catalogo_jw;
+
+#[derive(Serialize)]
+pub struct InfoDoCatalogo {
+    versao: String,
+    baixado_em: u64,
+}
+
+#[tauri::command]
+pub fn catalogo_info(app: tauri::AppHandle) -> Option<InfoDoCatalogo> {
+    catalogo_jw::versao_local(&pastas(&app).dados).map(|(versao, baixado_em)| InfoDoCatalogo { versao, baixado_em })
+}
+
+/// Baixa o catálogo do jw.org (se mudou). Andamento pelo evento `catalogo-progresso`.
+#[tauri::command]
+pub async fn catalogo_atualizar(app: tauri::AppHandle) -> Result<bool, String> {
+    let p = pastas(&app);
+    let app2 = app.clone();
+    em_segundo_plano(move || {
+        let mut ultimo = u64::MAX;
+        catalogo_jw::atualizar(&p.dados, &mut |feito, total| {
+            let pct = (feito * 100).checked_div(total).unwrap_or(0);
+            if pct != ultimo {
+                ultimo = pct;
+                let _ = app2.emit("catalogo-progresso", (feito, total));
+            }
+        })
+    })
+    .await
+}
+
+fn meps(lingua: &str) -> Result<i64, String> {
+    catalogo_jw::meps_de(lingua).ok_or_else(|| format!("{lingua}: idioma fora da lista"))
+}
+
+/// O que está instalado na Biblioteca, por (sigla, edição, língua) → pasta.
+fn instaladas(biblioteca: &Path) -> BTreeMap<(String, i64, i64), leitor_nucleo::biblioteca::Cartao> {
+    leitor_nucleo::biblioteca::cartoes(biblioteca).into_iter().map(|c| ((c.sigla.clone(), c.edicao, c.lingua), c)).collect()
+}
+
+#[derive(Serialize)]
+pub struct CategoriaDoCatalogo {
+    chave: &'static str,
+    nome: &'static str,
+    quantas: i64,
+    instaladas: usize,
+}
+
+#[tauri::command]
+pub async fn catalogo_categorias(app: tauri::AppHandle, lingua: String) -> Result<Vec<CategoriaDoCatalogo>, String> {
+    let p = pastas(&app);
+    em_segundo_plano(move || {
+        let m = meps(&lingua)?;
+        let todas = instaladas(&p.biblioteca);
+        let mut saida: Vec<CategoriaDoCatalogo> = catalogo_jw::categorias(&p.dados, m)?
+            .into_iter()
+            .map(|(chave, quantas)| CategoriaDoCatalogo {
+                chave,
+                nome: leitor_nucleo::biblioteca::nome_da_categoria(chave),
+                quantas,
+                instaladas: todas.values().filter(|c| c.lingua == m && c.categoria == chave).count(),
+            })
+            .collect();
+        // Instaladas de categoria que o catálogo não tem nesta língua.
+        for c in todas.values().filter(|c| c.lingua == m) {
+            if !saida.iter().any(|x| x.chave == c.categoria) {
+                let chave = catalogo_jw::ORDEM.iter().find(|k| **k == c.categoria).copied().unwrap_or("outras");
+                saida.push(CategoriaDoCatalogo { chave, nome: leitor_nucleo::biblioteca::nome_da_categoria(chave), quantas: 0, instaladas: 1 });
+            }
+        }
+        Ok(saida)
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn catalogo_anos(app: tauri::AppHandle, lingua: String, categoria: String) -> Result<Vec<i64>, String> {
+    let p = pastas(&app);
+    em_segundo_plano(move || catalogo_jw::anos(&p.dados, meps(&lingua)?, &categoria)).await
+}
+
+#[derive(Serialize)]
+pub struct ItemDaCategoria {
+    #[serde(flatten)]
+    publicacao: catalogo_jw::PubDoCatalogo,
+    /// A pasta na Biblioteca, se já está instalada.
+    pasta: Option<String>,
+    /// A capa da pasta instalada (melhor que a da internet sem conexão).
+    capa_local: Option<String>,
+    /// O jw.org tem versão mais nova que a instalada.
+    atualizar: bool,
+    chave: String,
+}
+
+#[tauri::command]
+pub async fn catalogo_publicacoes(app: tauri::AppHandle, lingua: String, categoria: String, ano: Option<i64>) -> Result<Vec<ItemDaCategoria>, String> {
+    let p = pastas(&app);
+    em_segundo_plano(move || {
+        let m = meps(&lingua)?;
+        let todas = instaladas(&p.biblioteca);
+        let registro = Registro::abrir(&p.registro()).unwrap_or_default();
+        Ok(catalogo_jw::lista(&p.dados, m, &categoria, ano)?
+            .into_iter()
+            .map(|pubc| {
+                let instalada = todas.get(&(pubc.simbolo.clone(), pubc.edicao, m));
+                let chave = Pedido::novo(&pubc.simbolo, &lingua, &catalogo_jw::edicao_da_api(pubc.edicao)).chave();
+                let atualizar = match (instalada, registro.baixados.get(&chave)) {
+                    (Some(_), Some(b)) => !b.arquivo.modificado.is_empty() && b.arquivo.modificado < pubc.modificado,
+                    _ => false,
+                };
+                ItemDaCategoria {
+                    pasta: instalada.map(|c| c.pasta.clone()),
+                    capa_local: instalada.and_then(|c| c.capa.clone()),
+                    atualizar,
+                    chave,
+                    publicacao: pubc,
+                }
+            })
+            .collect())
+    })
+    .await
+}
+
+/// Baixa uma publicação do catálogo (a nuvem do cartão). Andamento pelos
+/// mesmos eventos da aba de seleção (`baixar-progresso` e `baixar-fim`).
+#[tauri::command]
+pub fn baixar_publicacao(app: tauri::AppHandle, simbolo: String, lingua: String, edicao: i64) -> Result<(), String> {
+    let pedido = Pedido::novo(&simbolo, &lingua, &catalogo_jw::edicao_da_api(edicao));
+    comecar(
+        app,
+        Box::new(move |cliente, p, registro, progresso| {
+            vec![match leitor_baixar::baixar(cliente, p, registro, &pedido, &mut |f, t| progresso(&pedido, f, t)) {
+                Ok(r) => Desfecho::Feito(r),
+                Err(e) => Desfecho::Erro(pedido.clone(), e),
+            }]
+        }),
+    )
+}

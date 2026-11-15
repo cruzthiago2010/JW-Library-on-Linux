@@ -8,9 +8,9 @@
 
 ### Resumo
 
-1. O mais fácil: **Biblioteca → aba BAIXAR**. Escolha as publicações e o idioma, vá em
-   **Minha seleção** e toque em **Baixar agora**. Elas vão direto para a Biblioteca, e o app avisa
-   quando sai edição nova ou atualização.
+1. O mais fácil: **Biblioteca → PUBLICAÇÕES**. Abra uma categoria e clique na publicação com a
+   nuvem: ela é baixada do jw.org direto para a Biblioteca. Para revistas e apostilas, o "..." tem
+   **Baixar as edições novas sozinho**.
 2. Ou baixe o `.jwpub` no jw.org (na página da publicação, formato **JWPUB**) e importe o arquivo.
    Há três jeitos, explicados abaixo.
 3. Pronto: o app guarda uma cópia própria, e o arquivo baixado pode ser apagado.
@@ -69,9 +69,9 @@ Ao importar, o app abre o `.jwpub` e guarda o conteúdo em:
 
 ### In short
 
-1. The easiest: **Library → DOWNLOAD tab**. Pick publications and a language, go to **My
-   selection** and tap **Download now**. They go straight into the Library, and the app tells you
-   when a new issue or an update comes out.
+1. The easiest: **Library → PUBLICATIONS**. Open a category and click a publication with the
+   cloud: it is downloaded from jw.org straight into the Library. For magazines and workbooks, the
+   "..." menu has **Download new issues automatically**.
 2. Or download the `.jwpub` from jw.org (on the publication's page, **JWPUB** format) and import it.
    There are three ways, explained below.
 3. Done: the app keeps its own copy, so you can delete the downloaded file.

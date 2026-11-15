@@ -2,7 +2,7 @@
 // (como no JW Library do Windows: voltar à seção devolve onde se parou; a seta ← sobe um nível).
 const tauri = window.__TAURI__;
 const chamar = (cmd, args) => tauri.core.invoke(cmd, args);
-const VERSAO = '0.5';
+const VERSAO = '0.6';
 
 const SECOES = [
   ['inicio', 'Início', 'inicio'],
@@ -247,7 +247,7 @@ function removerPublicacao(pasta, titulo, tamanho = 0) {
 // A aba BAIXAR da Biblioteca (o baixador embutido, em baixar.js).
 function baixarPublicacoes() {
   secao = 'biblioteca';
-  pilhas.biblioteca = [{ tela: 'biblioteca', aba: 'baixar' }];
+  pilhas.biblioteca = [{ tela: 'biblioteca', aba: 'publicacoes' }];
   desenhar();
 }
 
@@ -630,7 +630,7 @@ const TELAS = {
 
   biblioteca(c, e) {
     const aba = e.aba || 'publicacoes';
-    const acoes = [['nuvem', t('Baixar publicações'), baixarPublicacoes], ['buscar', t('Buscar nas publicações'), () => abrir({ tela: 'busca', onde: 'publicacoes' })], ['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico]];
+    const acoes = [['idioma', t('Idioma das publicações'), (ev, b) => BibliotecaJW.escolherLingua(b)], ['nuvem', t('Atualizações automáticas'), () => abrir({ tela: 'selecao' })], ['buscar', t('Buscar nas publicações'), () => abrir({ tela: 'busca', onde: 'publicacoes' })], ['importar', t('Importar publicações'), escolherArquivos], ['historico', t('Histórico'), historico]];
     if (aba === 'baixados') acoes.unshift(['ordenar', t('Ordenar'), (ev, botao) => {
       const m = menu(botao, ['titulo:Título', 'maior:Maior arquivo', 'recente:Mais recentes'].map((o) => {
         const [k, n] = o.split(':');
@@ -638,14 +638,17 @@ const TELAS = {
       }).join(''));
       m.onclick = (x) => { const o = x.target.dataset.o; if (o) { e.ordem = o; desenhar(); } };
     }]);
-    barra(t('Biblioteca'), Idioma.nome, acoes);
-    const abas = `<div class="abas">${[['publicacoes', 'PUBLICAÇÕES'], ['baixados', 'BAIXADOS'], ['baixar', 'BAIXAR']].map(([k, n]) =>
+    barra(t('Biblioteca'), BibliotecaJW.nomeLingua(), acoes);
+    const abas = `<div class="abas">${[['publicacoes', 'PUBLICAÇÕES'], ['video', 'VÍDEO'], ['audio', 'ÁUDIO'], ['baixados', 'BAIXADOS']].map(([k, n]) =>
       `<button data-aba="${k}" class="${k === aba ? 'ativa' : ''}">${t(n)}</button>`).join('')}</div>`;
-    if (aba === 'baixar') {
-      c.innerHTML = `<div class="tela">${abas}<div class="lugar-baixar"></div></div>`;
-      Baixar.montar(c.querySelector('.lugar-baixar'));
+    if (aba === 'publicacoes') {
+      c.innerHTML = `<div class="tela">${abas}<div class="lugar-publicacoes"></div></div>`;
+      BibliotecaJW.publicacoes(c);
+    } else if (aba === 'video' || aba === 'audio') {
+      c.innerHTML = `<div class="tela">${abas}<div class="lugar-midia"></div></div>`;
+      Midia.montar(c.querySelector('.lugar-midia'), aba, e);
     } else if (!biblioteca.cartoes.length) {
-      c.innerHTML = `<div class="tela">${abas}<div class="vazio"><h2>${t('A biblioteca está vazia')}</h2><p>${t('Baixe publicações na aba BAIXAR, arraste arquivos .jwpub para esta janela ou use o botão abaixo.')}</p><button class="botao" id="baixar-vazio">${t('Baixar publicações')}</button> <button class="botao leve" id="imp">${t('Importar publicações')}</button></div></div>`;
+      c.innerHTML = `<div class="tela">${abas}<div class="vazio"><h2>${t('A biblioteca está vazia')}</h2><p>${t('Baixe publicações na aba PUBLICAÇÕES, arraste arquivos .jwpub para esta janela ou use o botão abaixo.')}</p><button class="botao" id="baixar-vazio">${t('Baixar publicações')}</button> <button class="botao leve" id="imp">${t('Importar publicações')}</button></div></div>`;
       $('#imp').onclick = escolherArquivos;
       $('#baixar-vazio').onclick = baixarPublicacoes;
     } else if (aba === 'publicacoes') {
@@ -666,7 +669,8 @@ const TELAS = {
     faixaNovos(c);
   },
 
-  categoria(c, e) {
+  async categoria(c, e) {
+    if (BibliotecaJW.tem()) return BibliotecaJW.categoria(c, e);
     const k = biblioteca.categorias.find((x) => x.chave === e.chave);
     const daqui = biblioteca.cartoes.filter((x) => x.categoria === e.chave).sort((a, b) => b.ano - a.ano || b.edicao - a.edicao);
     const anos = [...new Set(daqui.map((x) => x.ano))];
@@ -680,6 +684,15 @@ const TELAS = {
     }
     c.innerHTML = `<div class="tela"><div class="grade">${daqui.filter((x) => x.ano === ano).map((x) => cartao(x)).join('')}</div></div>`;
     ligarCartoes(c);
+  },
+
+  midia(c, e) { return Midia.categoria(c, e); },
+  audiobiblia(c, e) { return Midia.biblia(c, e); },
+
+  selecao(c) {
+    barra(t('Atualizações automáticas'), t('Biblioteca'), [['historico', t('Histórico'), historico]]);
+    c.innerHTML = `<div class="tela"><p class="dica">${t('Publicações e revistas que o app confere uma vez por dia: baixa as edições novas e as atualizações. Para incluir uma revista, use o "..." dela na Biblioteca e escolha "Baixar as edições novas sozinho".')}</p><div class="lugar-baixar"></div></div>`;
+    Baixar.montar(c.querySelector('.lugar-baixar'), true);
   },
 
   async sumario(c, e) {
@@ -829,6 +842,7 @@ function escolherIdioma() {
   document.querySelector('#soltar').textContent = t('Solte os arquivos .jwpub para importar');
   montarTrilho();
   try { await carregarBiblioteca(); } catch (e) { aviso(t('Erro ao ler a biblioteca: {x}', { x: e })); }
+  await BibliotecaJW.carregarInfo();
   ouvirArrastar();
   // Ao voltar para a janela (por exemplo, depois de usar o baixador), relê a
   // biblioteca e redesenha as telas que mostram a lista de publicações.
